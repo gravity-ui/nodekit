@@ -93,11 +93,11 @@ childCtx.log('Waiting for response to prepare');
 // ...
 ```
 
-**Note: NodeKit uses pino for logging but does not exposes any of it's API or configuration capabilities. However, we would like to add option for configuring pino little later, see issue #NNN for more details**.
+**Note: NodeKit uses pino for logging but does not exposes any of it's API or configuration capabilities. However, we would like to add option for configuring pino little later, see [this issue](https://github.com/gravity-ui/nodekit/issues/5) for more details**.
 
 ## Distributed tracing
 
-**Note: currently NodeKit uses OpenTelemetry & jaeger-client for tracing. However, we're planning to move to the OpenTelemetry libraries. See issue #NNN for more details.**
+**Note: currently NodeKit uses OpenTelemetry & jaeger-client for tracing. However, we're planning to move to the OpenTelemetry libraries. See [this issue](https://github.com/gravity-ui/nodekit/issues/2) for more details.**
 
 NodeKit Contexts are integrated with [Jaeger Tracing](https://www.jaegertracing.io). If tracing is enabled in your application, each created context (except the root one) will create jaeger span alongside it. Logs are working too: they're added to spans as events.
 
@@ -148,7 +148,7 @@ To make tracing work with default settings, you only need to set `appTracingEnab
 
 ## Metrics
 
-**This feature is not implemented yet, but it's on our roadmap. See issue #NNN.**
+**This feature is not implemented yet, but it's on our roadmap. See [this issue](https://github.com/gravity-ui/nodekit/issues/3).**
 
 ## Contexts key-value in-memory storage
 
@@ -178,10 +178,10 @@ ctx.log('user is admin', {userAdmin: ctx.get('userAdmin')}); // => undefined
 
 ## stats
 
-**This feature is not implemented yet, but it's on our roadmap. See issue #NNN**
+**This feature is not implemented yet, but it's on our roadmap. See [this issue](https://github.com/gravity-ui/nodekit/issues/1) for more information.**
 
 NodeKit is bundled with a logic for forming and sending batches of telemetry information to your ClickHouse instance. This data then can be used for building interactive dashboards with useful data about your application. This stats are not replacement for logs, traces or metrics, but an extension to them.
 
 ## Note on async_hooks
 
-NodeKit Contexts were designed before `AsyncLocalStorage` API stabilized in Node.js. We'll explore possibility of using it's capabilities in NodeKit-based projects in the future. Track issue #NNN for more details.
+NodeKit Contexts were designed before `AsyncLocalStorage` API stabilized in Node.js. We'll explore possibility of using it's capabilities in NodeKit-based projects in the future. Track [this issue](https://github.com/gravity-ui/nodekit/issues/4) for more details.
