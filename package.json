@@ -1,0 +1,39 @@
+{
+  "name": "@gravity-ui/nodekit",
+  "version": "0.1.0",
+  "description": "Simple toolkit for your Node.js apps and scripts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "npm run build && eslint . && jest",
+    "build": "rm -rf dist && tsc",
+    "prepublishOnly": "npm run build && rm -rf dist/tests",
+    "watch": "tsc -w",
+    "dev": "tsc-watch -w --onSuccess 'jest'",
+    "prepare": "husky install"
+  },
+  "author": "Gravity UI Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@gravity-ui/eslint-config": "^1.0.2",
+    "@gravity-ui/prettier-config": "^1.0.1",
+    "@gravity-ui/tsconfig": "^1.0.0",
+    "@types/jaeger-client": "^3.18.4",
+    "@types/jest": "^29.2.3",
+    "@types/node": "^18.11.9",
+    "@types/pino": "^7.0.5",
+    "eslint": "^8.28.0",
+    "husky": "^8.0.2",
+    "jest": "^29.3.1",
+    "prettier": "^2.8.0",
+    "tsc-watch": "^5.0.3",
+    "typescript": "^4.5.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "jaeger-client": "^3.19.0",
+    "opentracing": "^0.14.7",
+    "pino": "^8.8.0",
+    "pino-pretty": "^9.1.1"
+  }
+}

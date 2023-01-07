@@ -1,0 +1,9 @@
+{
+  "extends": "@gravity-ui/tsconfig/tsconfig",
+  "compilerOptions": {
+    "outDir": "dist",
+    "declaration": true
+  },
+  "include": ["src/**/*.ts"],
+  "excludeDirectories": ["**/node_modules", "dist"]
+}
