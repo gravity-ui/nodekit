@@ -23,10 +23,10 @@ nodekit.ctx.log('App is ready');
 
 See `docs/` directory for additional documentation:
 
-- `docs/configuration.md` specifies how you can configure both nodekit itself and your nodekit-based applications
-- `docs/contexts.md` describes concept of NodeKit contexts, logging and tracing
-- `docs/app-error.md` contains description of useful custom error class they NodeKit provides for your applications
-- `docs/utils.md` lists some additional helper functions that are bundled with NodeKit
+- [`docs/configuration.md`](https://github.com/gravity-ui/nodekit/blob/main/docs/configuration.md) specifies how you can configure both nodekit itself and your nodekit-based applications
+- [`docs/contexts.md`](https://github.com/gravity-ui/nodekit/blob/main/docs/contexts.md) describes concept of NodeKit contexts, logging and tracing
+- [`docs/app-error.md`](https://github.com/gravity-ui/nodekit/blob/main/docs/app-error.md) contains description of useful custom error class they NodeKit provides for your applications
+- [`docs/utils.md`](https://github.com/gravity-ui/nodekit/blob/main/docs/utils.md) lists some additional helper functions that are bundled with NodeKit
 
 ## Contributing
 
