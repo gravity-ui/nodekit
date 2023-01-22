@@ -1,7 +1,7 @@
 import {initTracer, JaegerTracer} from 'jaeger-client';
 import * as dotenv from 'dotenv';
 import {loadFileConfigs} from './lib/file-configs';
-import {AppConfig} from './types';
+import {AppConfig, ShutdownHandler} from './types';
 import {isTrueEnvValue} from './lib/utils/is-true-env';
 import {initLogger} from './lib/logging';
 import pino from 'pino';
@@ -30,6 +30,8 @@ export class NodeKit {
     private logger: pino.Logger;
     private tracer: JaegerTracer;
 
+    private shutdownHandlers: ShutdownHandler[];
+
     constructor(options: InitOptions = {}) {
         if (!options.disableDotEnv) {
             dotenv.config();
@@ -38,6 +40,8 @@ export class NodeKit {
         const appInstallation = process.env.APP_INSTALLATION;
         const appEnv = process.env.APP_ENV;
         const appDevMode = isTrueEnvValue(process.env.APP_DEV_MODE || '') || false;
+
+        this.shutdownHandlers = [];
 
         const fileConfig: AppConfig = loadFileConfigs(options.configsPath, appInstallation, appEnv);
 
@@ -87,10 +91,25 @@ export class NodeKit {
             utils: this.utils,
         });
 
-        ['SIGTERM', 'SIGINT'].forEach((signal) => {
-            process.on(signal, () => {
-                this.tracer.close(() => process.exit(0));
+        this.addShutdownHandler(() => {
+            return new Promise((resolve) => {
+                this.tracer.close?.(() => resolve());
             });
         });
+
+        ['SIGTERM', 'SIGINT'].forEach((signal) => {
+            process.on(signal, () => {
+                Promise.all(this.shutdownHandlers.map((handler) => handler()))
+                    .then(() => process.exit(0))
+                    .catch((error) => {
+                        this.ctx.logError('Error executing shutdown handlers', error);
+                        process.exit(1);
+                    });
+            });
+        });
+    }
+
+    addShutdownHandler(handler: ShutdownHandler) {
+        this.shutdownHandlers.push(handler);
     }
 }

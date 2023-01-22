@@ -21,3 +21,7 @@ export interface AppConfig {
 export interface AppContextParams {}
 
 export type Dict = {[key: string]: unknown};
+
+export interface ShutdownHandler {
+    (): Promise<void>;
+}
