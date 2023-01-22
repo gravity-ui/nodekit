@@ -24,13 +24,13 @@ type ContextCallbackFunction<T> = (ctx: AppContext) => T;
 export class AppContext {
     config: AppConfig;
     parentContext?: AppContext;
+    utils: NodeKit['utils'];
 
     protected appParams: AppContextParams;
     protected name: string;
     private logger: pino.Logger;
     private tracer: JaegerTracer;
     private span?: Span;
-    private utils: NodeKit['utils'];
     private startTime: number;
     private endTime?: number;
     private loggerPrefix: string;
@@ -74,12 +74,23 @@ export class AppContext {
     }
 
     logError(message: string, error?: AppError | Error | unknown, extra: Dict = {}) {
-        this.logger.error(
-            Object.assign({}, extractErrorInfo(error), {
-                extra: this.utils.redactSensitiveKeys(extra),
-            }),
-            this.prepareLogMessage(message),
-        );
+        if (error) {
+            this.logger.error(
+                Object.assign({}, extractErrorInfo(error), {
+                    extra: this.utils.redactSensitiveKeys(extra),
+                }),
+                this.prepareLogMessage(message),
+            );
+        } else if (extra) {
+            this.logger.error(
+                {
+                    extra: this.utils.redactSensitiveKeys(extra),
+                },
+                this.prepareLogMessage(message),
+            );
+        } else {
+            this.logger.error(this.prepareLogMessage(message));
+        }
 
         this.span?.setTag(Tags.SAMPLING_PRIORITY, 1);
         this.span?.setTag(Tags.ERROR, true);
@@ -91,8 +102,8 @@ export class AppContext {
         );
     }
 
-    create(name: string, params?: AppContextParams) {
-        return new AppContext(name, {...params, parentContext: this});
+    create(name: string, params?: ContextParams) {
+        return new AppContext(name, {parentContext: this, ...params});
     }
 
     call<T>(name: string, fn: ContextCallbackFunction<T>, params?: ContextParams): T;
@@ -179,6 +190,11 @@ export class AppContext {
         } else {
             return {};
         }
+    }
+
+    getTraceId() {
+        // @ts-ignore
+        return this.span?._spanContext?.toTraceId();
     }
 
     private prepareLogMessage(message: string) {
