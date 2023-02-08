@@ -39,4 +39,4 @@ AppError.isAppError(err);
 throw AppError.wrap(error, {code: 'ERR.REQUEST_DENIED'});
 ```
 
-When wrapping axios error, AppError extracts request url, response status and also request id and trace id (if present) from the axios error instance and places them into "debug" field. In the future we'll allow extending this logic in plugins 1to understand more types of special libary errors.
+When wrapping axios error, AppError extracts request url, response status and also request id and trace id (if present) from the axios error instance and places them into "debug" field. In the future we'll allow extending this logic in plugins to understand more types of special libary errors.
