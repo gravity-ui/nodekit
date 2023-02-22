@@ -12,6 +12,9 @@
     "dev": "tsc-watch -w --onSuccess 'jest'",
     "prepare": "husky install"
   },
+  "files": [
+    "dist"
+  ],
   "author": "Gravity UI Team",
   "license": "MIT",
   "devDependencies": {
