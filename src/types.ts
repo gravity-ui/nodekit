@@ -32,7 +32,7 @@ export interface AppContextParams {}
 export type Dict = {[key: string]: unknown};
 
 export interface ShutdownHandler {
-    (): Promise<void>;
+    (signal: 'SIGTERM' | 'SIGINT'): Promise<unknown> | void;
 }
 export interface TelemetryClickhouseTableDescription {
     [name: string]: 'number' | 'string' | 'timestamp';
