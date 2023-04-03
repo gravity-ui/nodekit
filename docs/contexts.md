@@ -146,6 +146,22 @@ To make tracing work with default settings, you only need to set `appTracingEnab
 - `appTracingSampler: {type: string; param: number}` - allows to tune probability with which spans would be sent to the tracing system (by default NodeKit sends all spans)
 - `appTracingAgentHost: string` and `appTracingAgentPort: number` allow to change default jaeger agent location
 
+## Telemetry statistics
+
+To collect timing statitistics from your app, you need to prepare your own clickhouse-server and provide required options in your config:
+
+```ts
+interface AppConfig {
+  /* Required telemetry options */
+  appTelemetryChHost?: string;
+  appTelemetryChAuth?: string; // 'login:password'
+  appTelemetryChDatabase?: string;
+  // ...
+}
+```
+
+See more details on [Telemetry](httsp://github.com/gravity-ui/nodekit/blob/main/docs/telemetry.md) page.
+
 ## Metrics
 
 **This feature is not implemented yet, but it's on our roadmap. See [this issue](https://github.com/gravity-ui/nodekit/issues/3).**

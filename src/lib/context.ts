@@ -14,10 +14,16 @@ interface ContextInitialParams {
     config: AppConfig;
     logger: pino.Logger;
     tracer: JaegerTracer;
+    stats: AppTelemetrySendStats;
     parentSpanContext?: SpanContext;
     utils: NodeKit['utils'];
     loggerPostfix?: string;
     tags?: Dict;
+}
+
+export interface AppTelemetrySendStats {
+    (table: string, data: {[name: string]: string | number}): void;
+    (data: {[name: string]: string | number}): void;
 }
 
 interface ContextParentParams
@@ -35,6 +41,7 @@ export class AppContext {
     config: AppConfig;
     parentContext?: AppContext;
     utils: NodeKit['utils'];
+    stats: AppTelemetrySendStats;
 
     protected appParams: AppContextParams;
     protected name: string;
@@ -63,6 +70,7 @@ export class AppContext {
                 tags: this.utils.redactSensitiveKeys(params.tags || {}),
                 childOf: params.parentSpanContext || params.parentContext?.span,
             });
+            this.stats = params.parentContext.stats;
         } else if (params.config && params.logger && params.tracer && params.utils) {
             this.appParams = {};
             this.config = params.config;
@@ -71,6 +79,7 @@ export class AppContext {
             this.utils = params.utils;
             this.loggerPrefix = '';
             this.loggerPostfix = params.loggerPostfix || '';
+            this.stats = params.stats;
         } else {
             throw new Error(
                 'AppContext constructor requires either parent context or configuration',

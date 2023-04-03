@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "npm run build && eslint . && jest",
+    "test": "npm run build && npm run test:unit",
+    "test:unit": "jest --testPathPattern=dist/tests",
     "build": "rm -rf dist && tsc",
     "prepublishOnly": "npm run build && rm -rf dist/tests",
     "watch": "tsc -w",
@@ -25,9 +26,10 @@
     "@types/jest": "^29.2.3",
     "@types/node": "^18.11.9",
     "@types/pino": "^7.0.5",
+    "axios": "^0.21.4",
     "eslint": "^8.28.0",
     "husky": "^8.0.2",
-    "jest": "^29.3.1",
+    "jest": "^29.5.0",
     "prettier": "^2.8.0",
     "tsc-watch": "^5.0.3",
     "typescript": "^4.5.0"
@@ -38,5 +40,8 @@
     "opentracing": "^0.14.7",
     "pino": "^8.8.0",
     "pino-pretty": "^9.1.1"
+  },
+  "peerDependencies": {
+    "axios": "^0.21.4"
   }
 }
