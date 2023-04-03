@@ -7,16 +7,26 @@ import {AppError} from './app-error';
 import {extractErrorInfo} from './error-parser';
 import {IncomingHttpHeaders} from 'http';
 
-interface ContextParams {
+type ContextParams = ContextInitialParams | ContextParentParams;
+
+interface ContextInitialParams {
     contextId?: string;
-    config?: AppConfig;
-    logger?: pino.Logger;
-    tracer?: JaegerTracer;
-    parentContext?: AppContext;
+    config: AppConfig;
+    logger: pino.Logger;
+    tracer: JaegerTracer;
     parentSpanContext?: SpanContext;
-    utils?: NodeKit['utils'];
+    utils: NodeKit['utils'];
     loggerPostfix?: string;
     tags?: Dict;
+}
+
+interface ContextParentParams
+    extends Pick<ContextInitialParams, 'parentSpanContext' | 'loggerPostfix' | 'tags'> {
+    parentContext: AppContext;
+}
+
+function isContextParentParams(v: ContextParams): v is ContextParentParams {
+    return Boolean((v as ContextParentParams).parentContext);
 }
 
 type ContextCallbackFunction<T> = (ctx: AppContext) => T;
@@ -40,7 +50,7 @@ export class AppContext {
         this.name = name;
         this.startTime = Date.now();
 
-        if (params.parentContext) {
+        if (isContextParentParams(params)) {
             this.config = params.parentContext.config;
             this.logger = params.parentContext.logger;
             this.tracer = params.parentContext.tracer;
@@ -102,20 +112,24 @@ export class AppContext {
         );
     }
 
-    create(name: string, params?: ContextParams) {
+    create(name: string, params?: Omit<ContextParentParams, 'parentContext'>) {
         return new AppContext(name, {parentContext: this, ...params});
     }
 
-    call<T>(name: string, fn: ContextCallbackFunction<T>, params?: ContextParams): T;
+    call<T>(
+        name: string,
+        fn: ContextCallbackFunction<T>,
+        params?: Omit<ContextParentParams, 'parentContext'>,
+    ): T;
     call<T>(
         name: string,
         fn: ContextCallbackFunction<Promise<T>>,
-        params?: ContextParams,
+        params?: Omit<ContextParentParams, 'parentContext'>,
     ): Promise<T>;
     call<T>(
         name: string,
         fn: ContextCallbackFunction<T | Promise<T>>,
-        params?: ContextParams,
+        params?: Omit<ContextParentParams, 'parentContext'>,
     ): T | Promise<T> {
         const ctx = this.create(name, params);
 
