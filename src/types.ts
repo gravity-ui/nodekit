@@ -16,6 +16,15 @@ export interface AppConfig {
     appTracingSampler?: {type: string; param: number};
     appTracingAgentHost?: string;
     appTracingAgentPort?: number;
+
+    appTelemetryChHost?: string;
+    appTelemetryChPort?: string;
+    appTelemetryChAuth?: string;
+    appTelemetryChDatabase?: string;
+    appTelemetryChTables?: {[name: string]: {[name: string]: 'number' | 'string' | 'timestamp'}};
+    appTelemetryChBatchSize?: number;
+    appTelemetryChBacklogSize?: number;
+    appTelemetryChMirrorToLogs?: boolean;
 }
 
 export interface AppContextParams {}
@@ -24,4 +33,7 @@ export type Dict = {[key: string]: unknown};
 
 export interface ShutdownHandler {
     (): Promise<void>;
+}
+export interface TelemetryClickhouseTableDescription {
+    [name: string]: 'number' | 'string' | 'timestamp';
 }

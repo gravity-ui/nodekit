@@ -11,6 +11,7 @@ import {
     prepareSensitiveKeysRedacter,
     SensitiveKeysRedacter,
 } from './lib/utils/redact-sensitive-keys';
+import {prepareClickhouseClient} from './lib/telemetry/clickhouse';
 
 interface InitOptions {
     disableDotEnv?: boolean;
@@ -89,7 +90,10 @@ export class NodeKit {
             logger: this.logger,
             tracer: this.tracer,
             utils: this.utils,
+            stats: () => {},
         });
+
+        this.ctx.stats = prepareClickhouseClient(this.ctx);
 
         this.addShutdownHandler(() => {
             return new Promise((resolve) => {
