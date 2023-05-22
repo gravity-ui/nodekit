@@ -95,25 +95,35 @@ export class NodeKit {
 
         this.ctx.stats = prepareClickhouseClient(this.ctx);
 
-        this.addShutdownHandler(() => {
-            return new Promise((resolve) => {
-                this.tracer.close?.(() => resolve());
-            });
-        });
+        this.addShutdownHandler(() => new Promise<void>((resolve) => this.tracer.close(resolve)));
 
-        ['SIGTERM', 'SIGINT'].forEach((signal) => {
-            process.on(signal, () => {
-                Promise.all(this.shutdownHandlers.map((handler) => handler()))
-                    .then(() => process.exit(0))
-                    .catch((error) => {
-                        this.ctx.logError('Error executing shutdown handlers', error);
-                        process.exit(1);
-                    });
-            });
-        });
+        this.setupShutdownSignals();
     }
 
     addShutdownHandler(handler: ShutdownHandler) {
         this.shutdownHandlers.push(handler);
+    }
+
+    private setupShutdownSignals() {
+        const signals = ['SIGTERM', 'SIGINT'] as const;
+
+        const handleSignal: ShutdownHandler = (signal) => {
+            signals.forEach((signalName) => process.off(signalName, handleSignal));
+
+            let code = 0;
+
+            const promises = this.shutdownHandlers.map((handler) => {
+                const handlePromise = new Promise((resolve) => resolve(handler(signal)));
+
+                return handlePromise.catch((error) => {
+                    code = 1;
+                    this.ctx.logError('Error executing shutdown handler', error);
+                });
+            });
+
+            Promise.allSettled(promises).then(() => process.exit(code));
+        };
+
+        signals.forEach((signal) => process.on(signal, handleSignal));
     }
 }
