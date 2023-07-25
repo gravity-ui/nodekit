@@ -2,7 +2,7 @@ import pino from 'pino';
 import {JaegerTracer} from 'jaeger-client';
 import {Span, Tags, SpanContext, FORMAT_HTTP_HEADERS} from 'opentracing';
 import {NodeKit} from '../nodekit';
-import {AppConfig, AppContextParams, Dict} from '../types';
+import {AppConfig, AppContextParams, Dict, AppDynamicConfig} from '../types';
 import {AppError} from './app-error';
 import {extractErrorInfo} from './error-parser';
 import {IncomingHttpHeaders} from 'http';
@@ -17,6 +17,7 @@ interface ContextInitialParams {
     stats: AppTelemetrySendStats;
     parentSpanContext?: SpanContext;
     utils: NodeKit['utils'];
+    dynamicConfig?: AppDynamicConfig;
     loggerPostfix?: string;
     tags?: Dict;
 }
@@ -42,6 +43,7 @@ export class AppContext {
     parentContext?: AppContext;
     utils: NodeKit['utils'];
     stats: AppTelemetrySendStats;
+    dynamicConfig: AppDynamicConfig;
 
     protected appParams: AppContextParams;
     protected name: string;
@@ -62,6 +64,7 @@ export class AppContext {
             this.logger = params.parentContext.logger;
             this.tracer = params.parentContext.tracer;
             this.utils = params.parentContext.utils;
+            this.dynamicConfig = params.parentContext.dynamicConfig;
             this.appParams = Object.assign({}, params.parentContext?.appParams);
             this.loggerPrefix = `${params.parentContext.loggerPrefix} [${this.name}]`.trim();
             this.loggerPostfix = params.loggerPostfix || params.parentContext.loggerPostfix;
@@ -77,6 +80,7 @@ export class AppContext {
             this.logger = params.logger;
             this.tracer = params.tracer;
             this.utils = params.utils;
+            this.dynamicConfig = {};
             this.loggerPrefix = '';
             this.loggerPostfix = params.loggerPostfix || '';
             this.stats = params.stats;
