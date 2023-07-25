@@ -29,6 +29,8 @@ export interface AppConfig {
 
 export interface AppContextParams {}
 
+export interface AppDynamicConfig {}
+
 export type Dict = {[key: string]: unknown};
 
 export interface ShutdownHandler {

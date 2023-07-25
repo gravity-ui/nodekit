@@ -12,6 +12,7 @@ import {
     SensitiveKeysRedacter,
 } from './lib/utils/redact-sensitive-keys';
 import {prepareClickhouseClient} from './lib/telemetry/clickhouse';
+import {DynamicConfigSetup, DynamicConfigPoller} from './lib/dynamic-config-poller';
 
 interface InitOptions {
     disableDotEnv?: boolean;
@@ -102,6 +103,10 @@ export class NodeKit {
 
     addShutdownHandler(handler: ShutdownHandler) {
         this.shutdownHandlers.push(handler);
+    }
+
+    setupDynamicConfig(namespace: string, dynamicConfigSetup: DynamicConfigSetup) {
+        new DynamicConfigPoller(this.ctx, namespace, dynamicConfigSetup).startPolling();
     }
 
     private setupShutdownSignals() {
