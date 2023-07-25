@@ -5,7 +5,7 @@
 
 ### Features
 
-* add dynamic config pooler ([b3fab1f](https://github.com/gravity-ui/nodekit/commit/b3fab1fb0dfa441c99a98aaca996bb368d279fe5))
+* add dynamic config poller ([b3fab1f](https://github.com/gravity-ui/nodekit/commit/b3fab1fb0dfa441c99a98aaca996bb368d279fe5))
 
 
 ### Bug Fixes
