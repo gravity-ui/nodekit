@@ -13,6 +13,12 @@ import {
 } from './lib/utils/redact-sensitive-keys';
 import {prepareClickhouseClient} from './lib/telemetry/clickhouse';
 import {DynamicConfigSetup, DynamicConfigPoller} from './lib/dynamic-config-poller';
+import prepareSensitiveHeadersRedacter, {
+    SensitiveHeadersRedacter,
+} from './lib/utils/redact-sensitive-headers';
+import prepareSensitiveQueryParamsRedacter, {
+    SensitiveQueryParamsRedacter,
+} from './lib/utils/redact-sensitive-query-params';
 
 interface InitOptions {
     disableDotEnv?: boolean;
@@ -26,6 +32,8 @@ export class NodeKit {
 
     utils: {
         redactSensitiveKeys: SensitiveKeysRedacter;
+        redactSensitiveQueryParams: SensitiveQueryParamsRedacter;
+        redactSensitiveHeaders: SensitiveHeadersRedacter;
         isTrueEnvValue: (arg: string) => boolean;
     };
 
@@ -60,10 +68,28 @@ export class NodeKit {
             devMode: appDevMode,
         });
 
+        const redactSensitiveQueryParams = prepareSensitiveQueryParamsRedacter(
+            this.config.nkDefaultSensitiveQueryParams?.concat(
+                this.config.appSensitiveQueryParams || [],
+            ),
+            appDevMode,
+        );
+
+        const redactSensitiveHeaders = prepareSensitiveHeadersRedacter(
+            this.config.nkDefaultSensitiveHeaders?.concat(this.config.appSensitiveHeaders || []),
+            this.config.nkDefaultHeadersWithSensitiveUrls?.concat(
+                this.config.appHeadersWithSensitiveUrls || [],
+            ),
+            redactSensitiveQueryParams,
+            appDevMode,
+        );
+
         this.utils = {
             redactSensitiveKeys: prepareSensitiveKeysRedacter(
                 this.config.nkDefaultSensitiveKeys?.concat(this.config.appSensitiveKeys || []),
             ),
+            redactSensitiveHeaders,
+            redactSensitiveQueryParams,
             isTrueEnvValue,
         };
 

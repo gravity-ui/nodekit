@@ -8,7 +8,13 @@ export interface AppConfig {
     appDevMode?: boolean;
 
     nkDefaultSensitiveKeys?: string[];
+    nkDefaultSensitiveHeaders?: string[];
+    nkDefaultHeadersWithSensitiveUrls?: string[];
+    nkDefaultSensitiveQueryParams?: string[];
     appSensitiveKeys?: string[];
+    appSensitiveHeaders?: string[];
+    appHeadersWithSensitiveUrls?: string[];
+    appSensitiveQueryParams?: string[];
 
     appTracingEnabled?: boolean;
     appTracingServiceName?: string;
