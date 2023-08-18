@@ -1,4 +1,11 @@
-export interface AppConfig {
+interface DefaultNodeKitConfig {
+    nkDefaultSensitiveKeys?: string[];
+    nkDefaultSensitiveHeaders?: string[];
+    nkDefaultHeadersWithSensitiveUrls?: string[];
+    nkDefaultSensitiveQueryParams?: string[];
+}
+
+export interface AppConfig extends DefaultNodeKitConfig {
     appName?: string;
     appVersion?: string;
 
@@ -7,10 +14,6 @@ export interface AppConfig {
 
     appDevMode?: boolean;
 
-    nkDefaultSensitiveKeys?: string[];
-    nkDefaultSensitiveHeaders?: string[];
-    nkDefaultHeadersWithSensitiveUrls?: string[];
-    nkDefaultSensitiveQueryParams?: string[];
     appSensitiveKeys?: string[];
     appSensitiveHeaders?: string[];
     appHeadersWithSensitiveUrls?: string[];

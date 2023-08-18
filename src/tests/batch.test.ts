@@ -1,5 +1,3 @@
-'use strict';
-
 import {prepareBatchedQueue, TICK_INTERVAL} from '../lib/utils/batch';
 
 jest.useFakeTimers({legacyFakeTimers: true});
@@ -87,7 +85,7 @@ it('retries to send failed payloads', async () => {
     jest.advanceTimersByTime(TICK_INTERVAL);
     expect(getSent().length).toEqual(0);
 
-    // advanceTimersByTime не работает с промисами
+    // advanceTimersByTime doesn't work with promises
     await flushPromises();
 
     setSendToSucceed();
@@ -122,7 +120,7 @@ it('does not overflow backlog', async () => {
 
     messages.forEach(push);
 
-    // Ждем подольше, чтобы успели отработать все батчи
+    // Waiting for longer so all batches would finish
     jest.advanceTimersByTime(TICK_INTERVAL * 5);
     expect(sum(getSent())).toEqual(LIMITED_BACKLOG_SIZE);
 });
