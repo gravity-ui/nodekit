@@ -1,3 +1,5 @@
+import {pino} from 'pino';
+
 export interface AppConfig {
     appName?: string;
     appVersion?: string;
@@ -11,10 +13,13 @@ export interface AppConfig {
     nkDefaultSensitiveHeaders?: string[];
     nkDefaultHeadersWithSensitiveUrls?: string[];
     nkDefaultSensitiveQueryParams?: string[];
+
     appSensitiveKeys?: string[];
     appSensitiveHeaders?: string[];
     appHeadersWithSensitiveUrls?: string[];
     appSensitiveQueryParams?: string[];
+
+    appLoggingDestination?: pino.DestinationStream;
 
     appTracingEnabled?: boolean;
     appTracingServiceName?: string;
