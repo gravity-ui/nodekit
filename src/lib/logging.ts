@@ -3,9 +3,10 @@ import pino from 'pino';
 interface InitLoggerOptions {
     appName: string;
     devMode: boolean;
+    destination?: pino.DestinationStream;
 }
 
-export function initLogger({appName, devMode}: InitLoggerOptions) {
+export function initLogger({appName, devMode, destination}: InitLoggerOptions) {
     const transportConfig = devMode
         ? {
               target: 'pino-pretty',
@@ -17,7 +18,7 @@ export function initLogger({appName, devMode}: InitLoggerOptions) {
           }
         : undefined;
 
-    return pino({
+    const options = {
         name: appName,
         safe: true,
         leve: 'debug',
@@ -25,5 +26,11 @@ export function initLogger({appName, devMode}: InitLoggerOptions) {
             error: pino.stdSerializers.err,
         },
         transport: transportConfig,
-    });
+    };
+
+    if (destination && !devMode) {
+        return pino(options, destination);
+    } else {
+        return pino(options);
+    }
 }

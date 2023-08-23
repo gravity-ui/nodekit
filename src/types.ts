@@ -1,3 +1,5 @@
+import {pino} from 'pino';
+
 interface DefaultNodeKitConfig {
     nkDefaultSensitiveKeys?: string[];
     nkDefaultSensitiveHeaders?: string[];
@@ -14,10 +16,17 @@ export interface AppConfig extends DefaultNodeKitConfig {
 
     appDevMode?: boolean;
 
+    nkDefaultSensitiveKeys?: string[];
+    nkDefaultSensitiveHeaders?: string[];
+    nkDefaultHeadersWithSensitiveUrls?: string[];
+    nkDefaultSensitiveQueryParams?: string[];
+
     appSensitiveKeys?: string[];
     appSensitiveHeaders?: string[];
     appHeadersWithSensitiveUrls?: string[];
     appSensitiveQueryParams?: string[];
+
+    appLoggingDestination?: pino.DestinationStream;
 
     appTracingEnabled?: boolean;
     appTracingServiceName?: string;

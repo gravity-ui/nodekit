@@ -93,7 +93,11 @@ childCtx.log('Waiting for response to prepare');
 // ...
 ```
 
-**Note: NodeKit uses pino for logging but does not exposes any of it's API or configuration capabilities. However, we would like to add option for configuring pino little later, see [this issue](https://github.com/gravity-ui/nodekit/issues/5) for more details**.
+**Note: NodeKit uses pino for logging but does not exposes most of it's API or configuration capabilities. However, we would like to add option for configuring pino little later, see [this issue](https://github.com/gravity-ui/nodekit/issues/5) for more details**.
+
+### Logging destinations
+
+You can override default logs destination (stdout) with `appLoggingDestination` option which accepts [pino.Destination](https://github.com/pinojs/pino/blob/master/docs/api.md#destination). It allows to implement custom formatters for logs as well as custom transports for them. Currently, this option only works if devMode is set to false. If you have an usecase when you need this option alongside enabled dev mode, feel free to open an issue.
 
 ## Distributed tracing
 

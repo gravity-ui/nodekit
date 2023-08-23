@@ -66,6 +66,7 @@ export class NodeKit {
         this.logger = initLogger({
             appName: this.config.appName as string,
             devMode: appDevMode,
+            destination: this.config.appLoggingDestination,
         });
 
         const redactSensitiveQueryParams = prepareSensitiveQueryParamsRedacter(
