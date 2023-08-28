@@ -61,12 +61,14 @@ export class NodeKit {
             appInstallation,
             appEnv,
             appDevMode,
+            appLoggingLevel: process.env.APP_LOGGING_LEVEL || fileConfig.appLoggingLevel,
         });
 
         this.logger = initLogger({
             appName: this.config.appName as string,
             devMode: appDevMode,
             destination: this.config.appLoggingDestination,
+            level: this.config.appLoggingLevel,
         });
 
         const redactSensitiveQueryParams = prepareSensitiveQueryParamsRedacter(

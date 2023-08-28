@@ -1,4 +1,5 @@
-import {pino} from 'pino';
+import type {pino} from 'pino';
+import type {LoggingLevel} from './lib/logging';
 
 export interface AppConfig {
     appName?: string;
@@ -20,6 +21,7 @@ export interface AppConfig {
     appSensitiveQueryParams?: string[];
 
     appLoggingDestination?: pino.DestinationStream;
+    appLoggingLevel?: LoggingLevel;
 
     appTracingEnabled?: boolean;
     appTracingServiceName?: string;

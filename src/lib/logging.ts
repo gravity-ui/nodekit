@@ -1,12 +1,18 @@
 import pino from 'pino';
 
+/**
+ * workaround to provide IntelliSense hints https://stackoverflow.com/a/61048124
+ */
+export type LoggingLevel = pino.LevelWithSilent | (string & {});
+
 interface InitLoggerOptions {
     appName: string;
     devMode: boolean;
     destination?: pino.DestinationStream;
+    level?: LoggingLevel;
 }
 
-export function initLogger({appName, devMode, destination}: InitLoggerOptions) {
+export function initLogger({appName, devMode, destination, level = 'debug'}: InitLoggerOptions) {
     const transportConfig = devMode
         ? {
               target: 'pino-pretty',
@@ -18,10 +24,10 @@ export function initLogger({appName, devMode, destination}: InitLoggerOptions) {
           }
         : undefined;
 
-    const options = {
+    const options: pino.LoggerOptions = {
         name: appName,
         safe: true,
-        leve: 'debug',
+        level,
         serializers: {
             error: pino.stdSerializers.err,
         },
