@@ -123,7 +123,17 @@ export class NodeKit {
 
         this.ctx.stats = prepareClickhouseClient(this.ctx);
 
-        this.addShutdownHandler(() => new Promise<void>((resolve) => this.tracer.close(resolve)));
+        this.addShutdownHandler(
+            () =>
+                new Promise<void>((resolve) => {
+                    // if tracing is disabled, initTracer returns object without close method
+                    if (typeof this.tracer.close === 'function') {
+                        this.tracer.close(resolve);
+                    } else {
+                        resolve();
+                    }
+                }),
+        );
 
         this.setupShutdownSignals();
     }
