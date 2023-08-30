@@ -27,6 +27,7 @@ export interface AppConfig {
     appTracingSampler?: {type: string; param: number};
     appTracingAgentHost?: string;
     appTracingAgentPort?: number;
+    appTracingCollectorEndpoint?: string;
 
     appTelemetryChHost?: string;
     appTelemetryChPort?: string;
