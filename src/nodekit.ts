@@ -103,6 +103,7 @@ export class NodeKit {
                     logSpans: this.config.appTracingDebugLogging,
                     agentHost: this.config.appTracingAgentHost,
                     agentPort: this.config.appTracingAgentPort,
+                    collectorEndpoint: this.config.appTracingCollectorEndpoint,
                 },
             },
             {
