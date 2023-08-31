@@ -1,10 +1,8 @@
 import {IncomingHttpHeaders} from 'http';
 
-import {Dict} from '../../types';
-
 import {prepareSensitiveKeysRedacter} from './redact-sensitive-keys';
 
-export type SensitiveHeadersRedacter = (inputHeaders: Dict | IncomingHttpHeaders) => Dict;
+export type SensitiveHeadersRedacter = (inputHeaders?: IncomingHttpHeaders) => IncomingHttpHeaders;
 
 export default function prepareSensitiveHeadersRedacter(
     sensitiveHeaders: Array<string> = [],
@@ -12,14 +10,14 @@ export default function prepareSensitiveHeadersRedacter(
     redactSensitiveQueryParams: (input: string) => string = (input) => input,
     isDevMode = false,
 ) {
-    const redactSensitiveHeaders: SensitiveHeadersRedacter = (inputHeaders) => {
+    const redactSensitiveHeaders: SensitiveHeadersRedacter = (inputHeaders = {}) => {
         if (isDevMode) {
             return inputHeaders;
         }
 
         const redactSensitiveKeys = prepareSensitiveKeysRedacter(sensitiveHeaders);
 
-        const result = redactSensitiveKeys(inputHeaders);
+        const result = redactSensitiveKeys(inputHeaders) as IncomingHttpHeaders;
 
         Object.keys(result).forEach((headerName) => {
             if (headersWithSensitiveUrls.includes(headerName.toLowerCase())) {
