@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.0.0](https://github.com/gravity-ui/nodekit/compare/v0.4.0...v1.0.0) (2023-08-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* **package:** update axios peer dependency
+* **loadFileConfigs:** use standard node js algorithm to resolve configs ([#23](https://github.com/gravity-ui/nodekit/issues/23))
+
+### chore
+
+* **package:** update axios peer dependency ([1a5b307](https://github.com/gravity-ui/nodekit/commit/1a5b307bb70511dae9eab2b064ba7af839db7e52))
+
+
+### Features
+
+* add logging destination option ([#22](https://github.com/gravity-ui/nodekit/issues/22)) ([833b5b6](https://github.com/gravity-ui/nodekit/commit/833b5b63794d7aaab77a7ce1c4ce6c7d8dc184d9))
+* **loadFileConfigs:** use standard node js algorithm to resolve configs ([#23](https://github.com/gravity-ui/nodekit/issues/23)) ([75ab0a7](https://github.com/gravity-ui/nodekit/commit/75ab0a7ef3858ef5a27315fdec02779660a69aaa))
+* **logging:** add option to control logging level ([#25](https://github.com/gravity-ui/nodekit/issues/25)) ([ab52cb0](https://github.com/gravity-ui/nodekit/commit/ab52cb06fc8cc3b4a767a43bfd2333be35df93ea))
+* **tracing:** allow to pass collector endpoint option to tracing reporter ([#26](https://github.com/gravity-ui/nodekit/issues/26)) ([6798b40](https://github.com/gravity-ui/nodekit/commit/6798b4049e1b8527b3d91f4e9768e9bba303b631))
+* update axios ([30e5a6a](https://github.com/gravity-ui/nodekit/commit/30e5a6a16516839fde8e2adc7d8665599e625ee0))
+
+
+### Bug Fixes
+
+* **changelog:** specify correct version in changelog ([43ebd9a](https://github.com/gravity-ui/nodekit/commit/43ebd9a6631c38f3700968c1994d8eaeb707e6fd))
+* **package:** rollback incorrect version change ([c06142e](https://github.com/gravity-ui/nodekit/commit/c06142eacebc5b5a8f9393130fed4f75fe80a14a))
+* **tracer:** tracer does not have close method if it is not enabled ([#24](https://github.com/gravity-ui/nodekit/issues/24)) ([98c4a96](https://github.com/gravity-ui/nodekit/commit/98c4a9660279c43e7baf6c18c4998ba417bcf5d0))
+
 ## [0.7.0](https://github.com/gravity-ui/nodekit/compare/v0.3.0...v0.7.0) (2023-08-31)
 
 ### Features
