@@ -1,21 +1,26 @@
-import fs from 'fs';
 import path from 'path';
 
 function interopRequire(filePath: string) {
-    const obj = require(filePath); // eslint-disable-line
+    // eslint-disable-next-line security/detect-non-literal-require, global-require
+    const obj = require(filePath);
     return obj && obj.__esModule ? obj.default : obj;
 }
 
 function getConfigByPath(configPath: string, configName: string) {
-    const folderFilePath = path.resolve(configPath, configName, 'index.js');
-    const filePath = path.resolve(configPath, `${configName}.js`);
-
-    if (fs.existsSync(folderFilePath)) {
-        return interopRequire(folderFilePath);
-    }
-
-    if (fs.existsSync(filePath)) {
+    const filePath = path.resolve(configPath, configName);
+    try {
         return interopRequire(filePath);
+    } catch (error) {
+        if (
+            !(
+                error &&
+                typeof error === 'object' &&
+                'code' in error &&
+                error.code === 'MODULE_NOT_FOUND'
+            )
+        ) {
+            throw error;
+        }
     }
 
     return {};
@@ -30,9 +35,7 @@ export function loadFileConfigs(
         return {};
     }
 
-    const commonConfigPath = path.resolve(configsRootPath, 'common.js');
-
-    const commonConfig = fs.existsSync(commonConfigPath) ? interopRequire(commonConfigPath) : {};
+    const commonConfig = getConfigByPath(configsRootPath, 'common');
 
     let envConfig = {};
 
@@ -42,15 +45,10 @@ export function loadFileConfigs(
 
     const installationConfigs: {common?: object; env?: object} = {common: {}, env: {}};
     if (appInstallation) {
-        const instCommonConfigPath = path.resolve(configsRootPath, appInstallation, 'common.js');
-        installationConfigs.common = fs.existsSync(instCommonConfigPath)
-            ? interopRequire(instCommonConfigPath)
-            : {};
+        const installationConfigPath = path.resolve(configsRootPath, appInstallation);
+        installationConfigs.common = getConfigByPath(installationConfigPath, 'common');
         if (appEnv) {
-            installationConfigs.env = getConfigByPath(
-                path.resolve(configsRootPath, appInstallation),
-                appEnv,
-            );
+            installationConfigs.env = getConfigByPath(installationConfigPath, appEnv);
         }
     }
 
