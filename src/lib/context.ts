@@ -1,11 +1,14 @@
-import pino from 'pino';
+import {IncomingHttpHeaders} from 'http';
+
 import {JaegerTracer} from 'jaeger-client';
-import {Span, Tags, SpanContext, FORMAT_HTTP_HEADERS} from 'opentracing';
+import {FORMAT_HTTP_HEADERS, Span, SpanContext, Tags} from 'opentracing';
+import pino from 'pino';
+
 import {NodeKit} from '../nodekit';
-import {AppConfig, AppContextParams, Dict, AppDynamicConfig} from '../types';
+import {AppConfig, AppContextParams, AppDynamicConfig, Dict} from '../types';
+
 import {AppError} from './app-error';
 import {extractErrorInfo} from './error-parser';
-import {IncomingHttpHeaders} from 'http';
 
 type ContextParams = ContextInitialParams | ContextParentParams;
 

@@ -1,9 +1,11 @@
-import {TelemetryClickhouseTableDescription, Dict} from '../../types';
-import {prepareBatchedQueue, DEFAULT_BACKLOG_SIZE, DEFAULT_BATCH_SIZE} from '../utils/batch';
 import https from 'https';
-import axios, {AxiosError} from 'axios';
 import os from 'os';
+
+import axios, {AxiosError} from 'axios';
+
+import {Dict, TelemetryClickhouseTableDescription} from '../../types';
 import type {AppContext} from '../context';
+import {DEFAULT_BACKLOG_SIZE, DEFAULT_BATCH_SIZE, prepareBatchedQueue} from '../utils/batch';
 
 function escape(input = '') {
     return input.replace(/\\/g, '\\').replace(/'/g, "\\'");

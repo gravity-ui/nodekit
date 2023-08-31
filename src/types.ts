@@ -1,4 +1,5 @@
 import type {pino} from 'pino';
+
 import type {LoggingLevel} from './lib/logging';
 
 export interface AppConfig {

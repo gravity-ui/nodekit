@@ -1,6 +1,6 @@
 'use strict';
 
-import {prepareBatchedQueue, TICK_INTERVAL} from '../lib/utils/batch';
+import {TICK_INTERVAL, prepareBatchedQueue} from '../lib/utils/batch';
 
 jest.useFakeTimers({legacyFakeTimers: true});
 

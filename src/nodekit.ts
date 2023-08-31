@@ -1,24 +1,25 @@
-import {initTracer, JaegerTracer} from 'jaeger-client';
 import * as dotenv from 'dotenv';
-import {loadFileConfigs} from './lib/file-configs';
-import {AppConfig, ShutdownHandler} from './types';
-import {isTrueEnvValue} from './lib/utils/is-true-env';
-import {initLogger} from './lib/logging';
+import {JaegerTracer, initTracer} from 'jaeger-client';
 import pino from 'pino';
-import {AppContext} from './lib/context';
+
 import {NODEKIT_BASE_CONFIG} from './lib/base-config';
-import {
-    prepareSensitiveKeysRedacter,
-    SensitiveKeysRedacter,
-} from './lib/utils/redact-sensitive-keys';
+import {AppContext} from './lib/context';
+import {DynamicConfigPoller, DynamicConfigSetup} from './lib/dynamic-config-poller';
+import {loadFileConfigs} from './lib/file-configs';
+import {initLogger} from './lib/logging';
 import {prepareClickhouseClient} from './lib/telemetry/clickhouse';
-import {DynamicConfigSetup, DynamicConfigPoller} from './lib/dynamic-config-poller';
+import {isTrueEnvValue} from './lib/utils/is-true-env';
 import prepareSensitiveHeadersRedacter, {
     SensitiveHeadersRedacter,
 } from './lib/utils/redact-sensitive-headers';
+import {
+    SensitiveKeysRedacter,
+    prepareSensitiveKeysRedacter,
+} from './lib/utils/redact-sensitive-keys';
 import prepareSensitiveQueryParamsRedacter, {
     SensitiveQueryParamsRedacter,
 } from './lib/utils/redact-sensitive-query-params';
+import {AppConfig, ShutdownHandler} from './types';
 
 interface InitOptions {
     disableDotEnv?: boolean;
