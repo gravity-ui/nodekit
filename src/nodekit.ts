@@ -35,7 +35,7 @@ export class NodeKit {
         redactSensitiveKeys: SensitiveKeysRedacter;
         redactSensitiveQueryParams: SensitiveQueryParamsRedacter;
         redactSensitiveHeaders: SensitiveHeadersRedacter;
-        isTrueEnvValue: (arg: string) => boolean;
+        isTrueEnvValue: typeof isTrueEnvValue;
     };
 
     private logger: pino.Logger;
