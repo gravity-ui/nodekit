@@ -1,3 +1,3 @@
-export function isTrueEnvValue(input: string) {
+export function isTrueEnvValue(input: string | undefined) {
     return input === '1' || input === 'true';
 }
