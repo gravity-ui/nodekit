@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/gravity-ui/nodekit/compare/v1.1.0...v1.1.1) (2023-09-01)
+
+
+### Bug Fixes
+
+* **types:** use correct type of isTrueEnvValue ([#33](https://github.com/gravity-ui/nodekit/issues/33)) ([cd2d5e1](https://github.com/gravity-ui/nodekit/commit/cd2d5e1c92c1daaf1b59afab701fce32fbee8362))
+
 ## [1.1.0](https://github.com/gravity-ui/nodekit/compare/v1.0.0...v1.1.0) (2023-09-01)
 
 
