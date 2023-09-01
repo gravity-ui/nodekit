@@ -1,4 +1,5 @@
 import axios, {AxiosError} from 'axios';
+
 import type {AppContext} from './context';
 
 const DYNAMIC_CONFIG_POLL_INTERVAL = 30000;
@@ -43,12 +44,14 @@ export class DynamicConfigPoller {
 
         if (process.env.APP_DEBUG_DYNAMIC_CONFIG) {
             this.ctx.log('Dynamic config: fetch complete', {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 oldDynamicConfig: (this.ctx.dynamicConfig as Record<string, any>)[namespace],
                 fetchedDynamicConfig: response.data,
                 namespace,
             });
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (this.ctx.dynamicConfig as Record<string, any>)[namespace] = response.data;
 
         setTimeout(this.startPolling, this.getPollTimeout());

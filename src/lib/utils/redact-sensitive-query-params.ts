@@ -1,5 +1,7 @@
 import {URL} from 'url';
+
 import {Dict} from '../../types';
+
 import {prepareSensitiveKeysRedacter} from './redact-sensitive-keys';
 
 export type SensitiveQueryParamsRedacter = (input?: string) => string;

@@ -1,5 +1,7 @@
 import {IncomingHttpHeaders} from 'http';
+
 import {Dict} from '../../types';
+
 import {prepareSensitiveKeysRedacter} from './redact-sensitive-keys';
 
 export type SensitiveHeadersRedacter = (inputHeaders: Dict | IncomingHttpHeaders) => Dict;
