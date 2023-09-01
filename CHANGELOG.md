@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/gravity-ui/nodekit/compare/v1.0.0...v1.1.0) (2023-09-01)
+
+
+### Features
+
+* **utils:** improve redactSensitiveHeaders types ([#29](https://github.com/gravity-ui/nodekit/issues/29)) ([86763d5](https://github.com/gravity-ui/nodekit/commit/86763d56306068c05c9aa7bcaeca65492fda64b5))
+
+
+### Bug Fixes
+
+* **utils:** allow undefined input in isTrueEnvValue ([#32](https://github.com/gravity-ui/nodekit/issues/32)) ([41fb0d4](https://github.com/gravity-ui/nodekit/commit/41fb0d42a65f0f85011c6844a1de50485ccf556d))
+
 ## [1.0.0](https://github.com/gravity-ui/nodekit/compare/v0.7.0...v1.0.0) (2023-08-31)
 
 
