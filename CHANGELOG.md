@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/gravity-ui/nodekit/compare/v1.1.1...v1.2.0) (2023-09-19)
+
+
+### Features
+
+* add requestId to the context ([#35](https://github.com/gravity-ui/nodekit/issues/35)) ([73b93de](https://github.com/gravity-ui/nodekit/commit/73b93de177279811ce424bcdbf8a1928065919cd))
+
 ## [1.1.1](https://github.com/gravity-ui/nodekit/compare/v1.1.0...v1.1.1) (2023-09-01)
 
 
