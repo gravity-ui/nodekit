@@ -214,7 +214,8 @@ export class AppContext {
 
     getMetadata() {
         if (this.span) {
-            const metadata = {};
+            const requestId = this.get('requestId');
+            const metadata = requestId ? {requestId} : {};
             this.tracer.inject(this.span, FORMAT_HTTP_HEADERS, metadata);
             return metadata;
         } else {
