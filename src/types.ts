@@ -42,7 +42,9 @@ export interface AppConfig {
     appTelemetryChMirrorToLogs?: boolean;
 }
 
-export interface AppContextParams {}
+export interface AppContextParams {
+    requestId?: string;
+}
 
 export interface AppDynamicConfig {}
 
