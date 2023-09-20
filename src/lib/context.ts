@@ -8,6 +8,7 @@ import {NodeKit} from '../nodekit';
 import {AppConfig, AppContextParams, AppDynamicConfig, Dict} from '../types';
 
 import {AppError} from './app-error';
+import {REQUEST_ID_HEADER, REQUEST_ID_PARAM_NAME} from './consts';
 import {extractErrorInfo} from './error-parser';
 
 type ContextParams = ContextInitialParams | ContextParentParams;
@@ -213,14 +214,15 @@ export class AppContext {
     }
 
     getMetadata() {
-        if (this.span) {
-            const requestId = this.get('requestId');
-            const metadata = requestId ? {requestId} : {};
-            this.tracer.inject(this.span, FORMAT_HTTP_HEADERS, metadata);
-            return metadata;
-        } else {
-            return {};
+        const metadata: Record<string, string> = {};
+        const requestId = this.get(REQUEST_ID_PARAM_NAME);
+        if (requestId) {
+            metadata[REQUEST_ID_HEADER] = requestId;
         }
+        if (this.span) {
+            this.tracer.inject(this.span, FORMAT_HTTP_HEADERS, metadata);
+        }
+        return metadata;
     }
 
     getTraceId() {
