@@ -214,17 +214,15 @@ export class AppContext {
     }
 
     getMetadata() {
-        if (this.span) {
-            const requestId = this.get('requestId');
-            const metadata: Record<string, string> = {};
-            if (requestId) {
-                metadata[REQUEST_ID_HEADER] = requestId;
-            }
-            this.tracer.inject(this.span, FORMAT_HTTP_HEADERS, metadata);
-            return metadata;
-        } else {
-            return {};
+        const metadata: Record<string, string> = {};
+        const requestId = this.get('requestId');
+        if (requestId) {
+            metadata[REQUEST_ID_HEADER] = requestId;
         }
+        if (this.span) {
+            this.tracer.inject(this.span, FORMAT_HTTP_HEADERS, metadata);
+        }
+        return metadata;
     }
 
     getTraceId() {
