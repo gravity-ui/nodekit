@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/gravity-ui/nodekit/compare/v1.2.0...v1.2.1) (2023-09-20)
+
+
+### Bug Fixes
+
+* change requestId header name ([#37](https://github.com/gravity-ui/nodekit/issues/37)) ([a9d8173](https://github.com/gravity-ui/nodekit/commit/a9d8173c9000c5a1b490ba5c3de1e1dea208304d))
+
 ## [1.2.0](https://github.com/gravity-ui/nodekit/compare/v1.1.1...v1.2.0) (2023-09-19)
 
 
