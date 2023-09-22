@@ -1,5 +1,6 @@
-import { Dict } from "../../types";
-import { AppContext } from "../../lib/context";
+/* eslint-disable global-require */
+import {AppContext} from '../../lib/context';
+import {Dict} from '../../types';
 
 const MOCK_INTERVAL = 100;
 
@@ -8,31 +9,71 @@ jest.useFakeTimers({legacyFakeTimers: true});
 jest.mock('axios', () => ({
     __esModule: true,
     default: {
-        get: jest.fn()
-            .mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve({
-                data: {
-                    gravity: 9.81,
-                },
-            }), 1)))
-            .mockImplementationOnce(() => new Promise((_resolve, reject) => setTimeout(() => reject('URL did not respond'), 1)))
-            .mockImplementationOnce(() => new Promise((_resolve, reject) => setTimeout(() => reject('axios timeout'), 100)))
-            .mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve({
-                data: {
-                    gravity: 9.81,
-                },
-            }), 1)))
-            .mockImplementationOnce(() => new Promise((_resolve, reject) => setTimeout(() => reject('axios timeout'), 100)))
-}}));
+        get: jest
+            .fn()
+            .mockImplementation(
+                () =>
+                    new Promise((resolve) =>
+                        setTimeout(
+                            () =>
+                                resolve({
+                                    data: {
+                                        gravity: 9.81,
+                                    },
+                                }),
+                            1,
+                        ),
+                    ),
+            )
+            .mockImplementationOnce(
+                () =>
+                    new Promise((_resolve, reject) =>
+                        setTimeout(() => reject('URL did not respond'), 1),
+                    ),
+            )
+            .mockImplementationOnce(
+                () =>
+                    new Promise((_resolve, reject) =>
+                        setTimeout(() => reject('axios timeout'), 100),
+                    ),
+            )
+            .mockImplementationOnce(
+                () =>
+                    new Promise((resolve) =>
+                        setTimeout(
+                            () =>
+                                resolve({
+                                    data: {
+                                        gravity: 9.81,
+                                    },
+                                }),
+                            1,
+                        ),
+                    ),
+            )
+            .mockImplementationOnce(
+                () =>
+                    new Promise((_resolve, reject) =>
+                        setTimeout(() => reject('axios timeout'), 100),
+                    ),
+            ),
+    },
+}));
 
-function logNothing(_message: string, _extra?: Dict) {
-}
+function logNothing(_message: string, _extra?: Dict) {}
 
 const createMockAppContext = () => {
-    const mockCtx = new (<new (name: string, config: Object) => AppContext>AppContext)('test', {parentContext: false, config: {}, logger: {}, utils: {}, tracer: {}, }) as jest.Mocked<AppContext>;
+    const mockCtx = new (AppContext as new (name: string, config: Object) => AppContext)('test', {
+        parentContext: false,
+        config: {},
+        logger: {},
+        utils: {},
+        tracer: {},
+    }) as jest.Mocked<AppContext>;
     mockCtx.log = jest.fn().mockImplementation(logNothing);
     mockCtx.logError = jest.fn().mockImplementation(logNothing);
     return mockCtx;
-}
+};
 
 const mockAppContext = createMockAppContext();
 
@@ -44,20 +85,20 @@ const proceedWithTicksAndTimers = async (iterations: number, interval: number = 
         jest.advanceTimersByTime(interval);
         await new Promise(process.nextTick);
     }
-}
+};
 
 const MOCK_DYNAMIC_CONFIG = {
     url: 'mockUrl',
     interval: MOCK_INTERVAL,
-}
+};
 
 const baseEnv = process.env;
 
 beforeEach(() => {
     jest.clearAllMocks();
     jest.resetModules();
-    process.env = { ...baseEnv };
-})
+    process.env = {...baseEnv};
+});
 
 afterEach(() => {
     process.env = baseEnv;
@@ -73,9 +114,11 @@ test('check if we successfully set ctx.dynamicConfig after several error calls',
     const SUCCESS_CALLS = 1;
     const ERROR_CALLS = 2;
     // we subtract 1 because we dont't care if our poller move to startPolling again after onSuccess in this test
-    await proceedWithTicksAndTimers(POLLING_CALLS+SUCCESS_CALLS+ERROR_CALLS-1);
+    await proceedWithTicksAndTimers(POLLING_CALLS + SUCCESS_CALLS + ERROR_CALLS - 1);
     //ASSERT
-    expect((mockAppContext.dynamicConfig  as Record<string, any>).testPoller.gravity).toEqual(9.81);
+    expect(
+        (mockAppContext.dynamicConfig as Record<string, {gravity: number}>).testPoller.gravity,
+    ).toEqual(9.81);
 });
 
 test('check if we do not rewrite already set ctx.dynamicConfig after error call', async () => {
@@ -87,9 +130,11 @@ test('check if we do not rewrite already set ctx.dynamicConfig after error call'
     const POLLING_CALLS = 4;
     const SUCCESS_CALLS = 1;
     const ERROR_CALLS = 3;
-    await proceedWithTicksAndTimers(POLLING_CALLS+SUCCESS_CALLS+ERROR_CALLS);
+    await proceedWithTicksAndTimers(POLLING_CALLS + SUCCESS_CALLS + ERROR_CALLS);
     //ASSERT
-    expect((mockAppContext.dynamicConfig  as Record<string, any>).testPoller.gravity).toEqual(9.81);
+    expect(
+        (mockAppContext.dynamicConfig as Record<string, {gravity: number}>).testPoller.gravity,
+    ).toEqual(9.81);
 });
 
 test('check if we continue to poll for config after success', async () => {
@@ -102,7 +147,7 @@ test('check if we continue to poll for config after success', async () => {
     const POLLING_CALLS = 4;
     const SUCCESS_CALLS = 1;
     const ERROR_CALLS = 2;
-    await proceedWithTicksAndTimers(POLLING_CALLS+SUCCESS_CALLS+ERROR_CALLS);
+    await proceedWithTicksAndTimers(POLLING_CALLS + SUCCESS_CALLS + ERROR_CALLS);
     //ASSERT
     expect(spyOnStartPolling).toHaveBeenCalledTimes(POLLING_CALLS);
 });
@@ -118,9 +163,9 @@ test('check if we log stuff with APP_DEBUG_DYNAMIC_CONFIG=debug', async () => {
     const SUCCESS_CALLS = 1;
     const ERROR_CALLS = 2;
     // we subtract 1 because we dont't care if our poller move to startPolling again after onSuccess in this test
-    await proceedWithTicksAndTimers(POLLING_CALLS+SUCCESS_CALLS+ERROR_CALLS-1);
+    await proceedWithTicksAndTimers(POLLING_CALLS + SUCCESS_CALLS + ERROR_CALLS - 1);
     //ASSERT
-    expect(spyOnLog).toHaveBeenCalledTimes(POLLING_CALLS+SUCCESS_CALLS);
+    expect(spyOnLog).toHaveBeenCalledTimes(POLLING_CALLS + SUCCESS_CALLS);
     expect(spyOnLogError).toHaveBeenCalledTimes(ERROR_CALLS);
 });
 
@@ -134,7 +179,7 @@ test('check if we do not log stuff without APP_DEBUG_DYNAMIC_CONFIG flag', async
     const SUCCESS_CALLS = 1;
     const ERROR_CALLS = 2;
     // we subtract 1 because we dont't care if our poller move to startPolling again after onSuccess in this test
-    await proceedWithTicksAndTimers(POLLING_CALLS+SUCCESS_CALLS+ERROR_CALLS-1);
+    await proceedWithTicksAndTimers(POLLING_CALLS + SUCCESS_CALLS + ERROR_CALLS - 1);
     //ASSERT
     expect(spyOnLog).not.toBeCalled();
     expect(spyOnLogError).toHaveBeenCalledTimes(ERROR_CALLS);

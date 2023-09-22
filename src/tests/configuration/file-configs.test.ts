@@ -1,5 +1,6 @@
-import { loadFileConfigs } from "../../lib/file-configs";
 import path from 'path';
+
+import {loadFileConfigs} from '../../lib/file-configs';
 
 const TEST_MOCK_CONFIG = {
     common: {
@@ -16,7 +17,7 @@ const TEST_MOCK_CONFIG = {
         },
         production: {
             surface: 'sand',
-        }
+        },
     },
     venus: {
         common: {
@@ -28,25 +29,26 @@ const TEST_MOCK_CONFIG = {
         },
         production: {
             surface: 'stone',
-        }
+        },
     },
 } as Record<string, Record<string, unknown>>;
 
 const MOCK_CONFIG_PATH = './mockConfigs';
 
-jest.doMock(
-    path.resolve(MOCK_CONFIG_PATH, `common`),
-    () => TEST_MOCK_CONFIG.common,
-    {virtual: true},
+jest.doMock(path.resolve(MOCK_CONFIG_PATH, `common`), () => TEST_MOCK_CONFIG.common, {
+    virtual: true,
+});
+
+['mars', 'venus'].forEach((installation) =>
+    ['common', 'test', 'production'].forEach((environment) =>
+        jest.doMock(
+            path.resolve(MOCK_CONFIG_PATH, `${installation}/${environment}`),
+            () => TEST_MOCK_CONFIG[installation][environment],
+            {virtual: true},
+        ),
+    ),
 );
 
-['mars', 'venus'].forEach((installation) => ['common', 'test', 'production'].forEach((environment) => 
-    jest.doMock(
-        path.resolve(MOCK_CONFIG_PATH, `${installation}/${environment}`),
-        () => TEST_MOCK_CONFIG[installation][environment],
-        {virtual: true},
-)));
-  
 test('check if we load right common config by default', () => {
     //ARRANGE
     //ACT
@@ -54,7 +56,7 @@ test('check if we load right common config by default', () => {
     //ASSERT
     expect(gravity).toEqual(9.81);
 });
-  
+
 test('check if we load specific common config without env', () => {
     //ARRANGE
     //ACT
@@ -109,7 +111,7 @@ test('check if we load different configs for different envs', () => {
     const {surface: testSurface} = loadFileConfigs('./mockConfigs', 'mars', 'test');
     const {surface: productionSurface} = loadFileConfigs('./mockConfigs', 'mars', 'production');
     //ASSERT
-    expect(testSurface == productionSurface).toEqual(false);
+    expect(testSurface === productionSurface).toEqual(false);
 });
 
 test('check if we load different configs for different installations', () => {
@@ -118,7 +120,7 @@ test('check if we load different configs for different installations', () => {
     const {gravity: marsSurface} = loadFileConfigs('./mockConfigs', 'mars', 'production');
     const {gravity: venusSurface} = loadFileConfigs('./mockConfigs', 'venus', 'production');
     //ASSERT
-    expect(marsSurface == venusSurface).toEqual(false);
+    expect(marsSurface === venusSurface).toEqual(false);
 });
 
 test('check if we load specific common config if env and installation parameters are OK', () => {
