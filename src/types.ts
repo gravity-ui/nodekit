@@ -38,6 +38,7 @@ export interface AppConfig {
     appTelemetryChAuth?: string;
     appTelemetryChDatabase?: string;
     appTelemetryChTables?: {[name: string]: {[name: string]: 'number' | 'string' | 'timestamp'}};
+    appTelemetryChSendInterval?: number;
     appTelemetryChBatchSize?: number;
     appTelemetryChBacklogSize?: number;
     appTelemetryChMirrorToLogs?: boolean;

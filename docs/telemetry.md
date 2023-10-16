@@ -48,6 +48,7 @@ To configure standard telemetry it is enough to provide following option:
 , other options:
 `appTelemetryChPort` – default 8443
 `appTelemetryChTables` – object with description of custom tables (see explanation below)
+`appTelemetryChSendInterval` – interval sending batch requests in milliseconds (default 3s)
 `appTelemetryChBatchSize` – count of rows to send within a batch requests (default 30)
 `appTelemetryChBacklogSize` – queue size (default 500)
 

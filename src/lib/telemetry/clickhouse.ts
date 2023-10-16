@@ -5,7 +5,12 @@ import axios, {AxiosError} from 'axios';
 
 import {Dict, TelemetryClickhouseTableDescription} from '../../types';
 import type {AppContext} from '../context';
-import {DEFAULT_BACKLOG_SIZE, DEFAULT_BATCH_SIZE, prepareBatchedQueue} from '../utils/batch';
+import {
+    DEFAULT_BACKLOG_SIZE,
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_TICK_INTERVAL,
+    prepareBatchedQueue,
+} from '../utils/batch';
 
 function escape(input = '') {
     return input.replace(/\\/g, '\\').replace(/'/g, "\\'");
@@ -52,6 +57,7 @@ export function prepareClickhouseClient(ctx: Pick<AppContext, 'config' | 'log' |
     const dbName = config.appTelemetryChDatabase;
     const tables = Object.assign({}, DEFAULT_TABLES, config.appTelemetryChTables);
 
+    const tickInterval = config.appTelemetryChSendInterval || DEFAULT_TICK_INTERVAL;
     const batchSize = config.appTelemetryChBatchSize || DEFAULT_BATCH_SIZE;
     const backlogSize = config.appTelemetryChBacklogSize || DEFAULT_BACKLOG_SIZE;
 
@@ -131,6 +137,7 @@ export function prepareClickhouseClient(ctx: Pick<AppContext, 'config' | 'log' |
                 }
                 ctx.logError(message, error, extra);
             },
+            tickInterval,
             backlogSize,
             batchSize,
         });

@@ -1,6 +1,6 @@
 'use strict';
 
-import {TICK_INTERVAL, prepareBatchedQueue} from '../lib/utils/batch';
+import {DEFAULT_TICK_INTERVAL, prepareBatchedQueue} from '../lib/utils/batch';
 
 jest.useFakeTimers({legacyFakeTimers: true});
 
@@ -43,7 +43,7 @@ it('successfully sends payloads', async () => {
 
     messages.forEach(push);
 
-    jest.advanceTimersByTime(TICK_INTERVAL);
+    jest.advanceTimersByTime(DEFAULT_TICK_INTERVAL);
 
     expect(sum(getSent())).toEqual(correctSum);
 });
@@ -61,15 +61,15 @@ it('correctly manages backlog of messages', async () => {
     messages.forEach(push);
     expect(getBacklogSize()).toEqual(150);
 
-    jest.advanceTimersByTime(TICK_INTERVAL);
+    jest.advanceTimersByTime(DEFAULT_TICK_INTERVAL);
     expect(getBacklogSize()).toEqual(100);
     expect(sum(getSent())).toEqual(50);
 
-    jest.advanceTimersByTime(TICK_INTERVAL);
+    jest.advanceTimersByTime(DEFAULT_TICK_INTERVAL);
     expect(getBacklogSize()).toEqual(50);
     expect(sum(getSent())).toEqual(100);
 
-    jest.advanceTimersByTime(TICK_INTERVAL);
+    jest.advanceTimersByTime(DEFAULT_TICK_INTERVAL);
     expect(getBacklogSize()).toEqual(0);
     expect(sum(getSent())).toEqual(150);
 });
@@ -84,14 +84,14 @@ it('retries to send failed payloads', async () => {
     setSendToFail();
     messages.forEach(push);
 
-    jest.advanceTimersByTime(TICK_INTERVAL);
+    jest.advanceTimersByTime(DEFAULT_TICK_INTERVAL);
     expect(getSent().length).toEqual(0);
 
     // advanceTimersByTime не работает с промисами
     await flushPromises();
 
     setSendToSucceed();
-    jest.advanceTimersByTime(TICK_INTERVAL);
+    jest.advanceTimersByTime(DEFAULT_TICK_INTERVAL);
     expect(sum(getSent())).toEqual(correctSum);
 });
 
@@ -104,7 +104,7 @@ it('does not retry more than three times', async () => {
     setSendToFail();
     messages.forEach(push);
 
-    jest.advanceTimersByTime(TICK_INTERVAL * 5);
+    jest.advanceTimersByTime(DEFAULT_TICK_INTERVAL * 5);
     expect(getSent().length).toEqual(0);
     expect(getBacklogSize()).toEqual(0);
 });
@@ -123,6 +123,6 @@ it('does not overflow backlog', async () => {
     messages.forEach(push);
 
     // Ждем подольше, чтобы успели отработать все батчи
-    jest.advanceTimersByTime(TICK_INTERVAL * 5);
+    jest.advanceTimersByTime(DEFAULT_TICK_INTERVAL * 5);
     expect(sum(getSent())).toEqual(LIMITED_BACKLOG_SIZE);
 });

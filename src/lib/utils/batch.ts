@@ -1,6 +1,6 @@
 import type {AppContext} from '../context';
 
-export const TICK_INTERVAL = 3000;
+export const DEFAULT_TICK_INTERVAL = 3000;
 
 export const DEFAULT_BACKLOG_SIZE = 500;
 export const DEFAULT_BATCH_SIZE = 50;
@@ -9,6 +9,7 @@ export const DEFAULT_RETRIES_NUMBER = 3;
 interface BatchedQueueArgs {
     fn: Function;
     logError?: AppContext['logError'];
+    tickInterval?: number;
     backlogSize?: number;
     batchSize?: number;
     retriesNumber?: number;
@@ -28,6 +29,7 @@ export function prepareBatchedQueue({
     fn,
     // eslint-disable-next-line no-console
     logError = console.error,
+    tickInterval = DEFAULT_TICK_INTERVAL,
     backlogSize = DEFAULT_BACKLOG_SIZE,
     batchSize = DEFAULT_BATCH_SIZE,
     retriesNumber = DEFAULT_RETRIES_NUMBER,
@@ -81,7 +83,7 @@ export function prepareBatchedQueue({
     const tickIntervalTimer = setInterval(() => {
         cleanup();
         send();
-    }, TICK_INTERVAL);
+    }, tickInterval);
     process.on('SIGTERM', () => clearInterval(tickIntervalTimer));
 
     function getBacklogSize() {
