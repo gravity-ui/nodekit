@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/gravity-ui/nodekit/compare/v1.2.1...v1.3.0) (2023-12-08)
+
+
+### Features
+
+* add userId context param for legacy compatibility ([#42](https://github.com/gravity-ui/nodekit/issues/42)) ([8edc95a](https://github.com/gravity-ui/nodekit/commit/8edc95aded8fb7a4e96b8924d54c082b33cb3956))
+* **clickhouse:** make telementry send interval configurable ([#40](https://github.com/gravity-ui/nodekit/issues/40)) ([cd4a9eb](https://github.com/gravity-ui/nodekit/commit/cd4a9ebe649e5a2c35f93b750a967f1f433fe38c))
+
 ## [1.2.1](https://github.com/gravity-ui/nodekit/compare/v1.2.0...v1.2.1) (2023-09-20)
 
 
