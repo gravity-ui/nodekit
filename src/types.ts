@@ -1,6 +1,6 @@
 import type {pino} from 'pino';
 
-import {REQUEST_ID_PARAM_NAME} from './lib/consts';
+import {REQUEST_ID_PARAM_NAME, USER_ID_PARAM_NAME} from './lib/consts';
 import type {LoggingLevel} from './lib/logging';
 
 export interface AppConfig {
@@ -46,6 +46,7 @@ export interface AppConfig {
 
 export interface AppContextParams {
     [REQUEST_ID_PARAM_NAME]?: string;
+    [USER_ID_PARAM_NAME]?: string;
 }
 
 export interface AppDynamicConfig {}
