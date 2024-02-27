@@ -22,6 +22,9 @@ requestTime UInt32,
 requestId String,
 requestMethod LowCardinality(String),
 requestUrl String
+responseSize UInt32
+traceId String
+userId String
 ) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/dbName.apiRequests', '{replica}')
 PARTITION BY toMonday(timestamp) ORDER BY (responseStatus, timestamp)
 ```
