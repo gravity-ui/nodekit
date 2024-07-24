@@ -15,12 +15,16 @@ export default function prepareSensitiveHeadersRedacter(
             return inputHeaders;
         }
 
+        const headersWithSensitiveUrlsLowered = headersWithSensitiveUrls.map((name) =>
+            name.toLowerCase(),
+        );
+
         const redactSensitiveKeys = prepareSensitiveKeysRedacter(sensitiveHeaders);
 
         const result = redactSensitiveKeys(inputHeaders) as IncomingHttpHeaders;
 
         Object.keys(result).forEach((headerName) => {
-            if (headersWithSensitiveUrls.includes(headerName.toLowerCase())) {
+            if (headersWithSensitiveUrlsLowered.includes(headerName.toLowerCase())) {
                 result[headerName] = redactSensitiveQueryParams(result[headerName] as string);
             }
         });
