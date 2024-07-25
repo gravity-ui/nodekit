@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/gravity-ui/nodekit/compare/v1.3.0...v1.4.0) (2024-07-25)
+
+
+### Features
+
+* **utils:** make data redacters settings case insensitive ([#48](https://github.com/gravity-ui/nodekit/issues/48)) ([12a32ca](https://github.com/gravity-ui/nodekit/commit/12a32cae2a24085279ccd44e0c98c11564410ae9))
+
 ## [1.3.0](https://github.com/gravity-ui/nodekit/compare/v1.2.1...v1.3.0) (2023-12-08)
 
 
