@@ -34,7 +34,6 @@
     "@types/jaeger-client": "^3.18.4",
     "@types/jest": "^29.2.3",
     "@types/node": "^18.11.9",
-    "@types/pino": "^7.0.5",
     "axios": "^1.4.0",
     "eslint": "^8.28.0",
     "husky": "^8.0.2",
