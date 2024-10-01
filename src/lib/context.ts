@@ -23,6 +23,7 @@ interface ContextInitialParams {
     utils: NodeKit['utils'];
     dynamicConfig?: AppDynamicConfig;
     loggerPostfix?: string;
+    loggerExtra?: Dict;
     tags?: Dict;
 }
 
@@ -32,7 +33,10 @@ export interface AppTelemetrySendStats {
 }
 
 interface ContextParentParams
-    extends Pick<ContextInitialParams, 'parentSpanContext' | 'loggerPostfix' | 'tags'> {
+    extends Pick<
+        ContextInitialParams,
+        'parentSpanContext' | 'loggerPostfix' | 'loggerExtra' | 'tags'
+    > {
     parentContext: AppContext;
 }
 
@@ -58,6 +62,7 @@ export class AppContext {
     private endTime?: number;
     private loggerPrefix: string;
     private loggerPostfix: string;
+    private loggerExtra?: Dict;
 
     constructor(name: string, params: ContextParams) {
         this.name = name;
@@ -72,6 +77,10 @@ export class AppContext {
             this.appParams = Object.assign({}, params.parentContext?.appParams);
             this.loggerPrefix = `${params.parentContext.loggerPrefix} [${this.name}]`.trim();
             this.loggerPostfix = params.loggerPostfix || params.parentContext.loggerPostfix;
+            this.loggerExtra = this.mergeExtra(
+                params.parentContext.loggerExtra,
+                params.loggerExtra,
+            );
 
             this.span = this.tracer.startSpan(this.name, {
                 tags: this.utils.redactSensitiveKeys(params.tags || {}),
@@ -87,6 +96,7 @@ export class AppContext {
             this.dynamicConfig = {};
             this.loggerPrefix = '';
             this.loggerPostfix = params.loggerPostfix || '';
+            this.loggerExtra = params.loggerExtra;
             this.stats = params.stats;
         } else {
             throw new Error(
@@ -95,24 +105,26 @@ export class AppContext {
         }
     }
 
-    log(message: string, extra: Dict = {}) {
-        this.logger.info(this.prepareExtra(extra), this.prepareLogMessage(message));
-        this.span?.log(Object.assign({}, this.utils.redactSensitiveKeys(extra), {event: message}));
+    log(message: string, extra?: Dict) {
+        const preparedExtra = this.prepareExtra(this.mergeExtra(this.loggerExtra, extra));
+
+        this.logger.info(preparedExtra, this.prepareLogMessage(message));
+        this.span?.log(Object.assign({}, preparedExtra, {event: message}));
     }
 
-    logError(message: string, error?: AppError | Error | unknown, extra: Dict = {}) {
+    logError(message: string, error?: AppError | Error | unknown, extra?: Dict) {
         if (error) {
             this.logger.error(
-                Object.assign({}, extractErrorInfo(error), {
-                    extra: this.utils.redactSensitiveKeys(extra),
-                }),
+                Object.assign(
+                    {},
+                    extractErrorInfo(error),
+                    this.prepareExtra(this.mergeExtra(this.loggerExtra, extra)),
+                ),
                 this.prepareLogMessage(message),
             );
         } else if (extra) {
             this.logger.error(
-                {
-                    extra: this.utils.redactSensitiveKeys(extra),
-                },
+                this.prepareExtra(this.mergeExtra(this.loggerExtra, extra)),
                 this.prepareLogMessage(message),
             );
         } else {
@@ -122,7 +134,7 @@ export class AppContext {
         this.span?.setTag(Tags.SAMPLING_PRIORITY, 1);
         this.span?.setTag(Tags.ERROR, true);
         this.span?.log(
-            Object.assign({}, this.utils.redactSensitiveKeys(extra), {
+            Object.assign({}, this.prepareExtra(this.mergeExtra(this.loggerExtra, extra)), {
                 event: message,
                 stack: error instanceof Error && error?.stack,
             }),
@@ -234,8 +246,18 @@ export class AppContext {
         return `${this.loggerPrefix} ${message} ${this.loggerPostfix}`.trim();
     }
 
-    private prepareExtra(extra: Dict) {
+    private prepareExtra(extra?: Dict) {
+        if (extra === undefined) {
+            return extra;
+        }
         const preparedExtra = this.utils.redactSensitiveKeys(extra);
         return Object.keys(preparedExtra).length ? preparedExtra : undefined;
+    }
+
+    private mergeExtra(extraParent?: Dict, extraCurrent?: Dict) {
+        if (extraParent === undefined) {
+            return extraCurrent;
+        }
+        return Object.assign({}, extraParent, extraCurrent);
     }
 }
