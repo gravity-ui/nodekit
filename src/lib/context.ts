@@ -251,7 +251,7 @@ export class AppContext {
         return `${this.loggerPrefix} ${message} ${this.loggerPostfix}`.trim();
     }
 
-    private prepareExtra(extra?: Dict) {
+    private prepareExtra(extra: Dict | undefined) {
         if (extra === undefined) {
             return extra;
         }
