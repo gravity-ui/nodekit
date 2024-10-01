@@ -242,6 +242,11 @@ export class AppContext {
         return this.span?._spanContext?.toTraceId();
     }
 
+    // allow override extra logger data, after ctx already initialized (ex. to add traceId from ctx)
+    setLoggerExtra(extra: Dict) {
+        this.loggerExtra = extra;
+    }
+
     private prepareLogMessage(message: string) {
         return `${this.loggerPrefix} ${message} ${this.loggerPostfix}`.trim();
     }
