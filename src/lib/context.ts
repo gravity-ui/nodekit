@@ -117,8 +117,8 @@ export class AppContext {
             this.logger.error(
                 Object.assign(
                     {},
-                    extractErrorInfo(error),
                     this.prepareExtra(this.mergeExtra(this.loggerExtra, extra)),
+                    extractErrorInfo(error),
                 ),
                 this.prepareLogMessage(message),
             );
