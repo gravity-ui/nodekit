@@ -259,7 +259,7 @@ export class AppContext {
         return Object.keys(preparedExtra).length ? preparedExtra : undefined;
     }
 
-    private mergeExtra(extraParent?: Dict, extraCurrent?: Dict) {
+    private mergeExtra(extraParent: Dict | undefined, extraCurrent: Dict | undefined) {
         if (extraParent === undefined) {
             return extraCurrent;
         }
