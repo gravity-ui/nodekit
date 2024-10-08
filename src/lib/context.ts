@@ -87,6 +87,8 @@ export class AppContext {
                 childOf: params.parentSpanContext || params.parentContext?.span,
             });
             this.stats = params.parentContext.stats;
+
+            this.parentContext = params.parentContext;
         } else if (params.config && params.logger && params.tracer && params.utils) {
             this.appParams = {};
             this.config = params.config;
@@ -128,7 +130,7 @@ export class AppContext {
                 this.prepareLogMessage(message),
             );
         } else {
-            this.logger.error(this.prepareLogMessage(message));
+            this.logger.error(this.loggerExtra, this.prepareLogMessage(message));
         }
 
         this.span?.setTag(Tags.SAMPLING_PRIORITY, 1);
@@ -248,7 +250,7 @@ export class AppContext {
     }
 
     clearLoggerExtra() {
-        this.loggerExtra = {};
+        this.loggerExtra = Object.assign({}, this.parentContext?.loggerExtra);
     }
 
     private prepareLogMessage(message: string) {
@@ -264,9 +266,6 @@ export class AppContext {
     }
 
     private mergeExtra(extraParent: Dict | undefined, extraCurrent: Dict | undefined) {
-        if (extraParent === undefined) {
-            return extraCurrent;
-        }
         return Object.assign({}, extraParent, extraCurrent);
     }
 }
