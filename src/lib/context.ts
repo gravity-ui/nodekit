@@ -108,7 +108,7 @@ export class AppContext {
     }
 
     log(message: string, extra?: Dict) {
-        const preparedExtra = this.prepareExtra(this.mergeExtra(this.loggerExtra, extra));
+        const preparedExtra = this.prepareExtra(extra);
 
         this.logger.info(preparedExtra, this.prepareLogMessage(message));
         this.span?.log(Object.assign({}, preparedExtra, {event: message}));
@@ -117,18 +117,11 @@ export class AppContext {
     logError(message: string, error?: AppError | Error | unknown, extra?: Dict) {
         if (error) {
             this.logger.error(
-                Object.assign(
-                    {},
-                    this.prepareExtra(this.mergeExtra(this.loggerExtra, extra)),
-                    extractErrorInfo(error),
-                ),
+                Object.assign({}, this.prepareExtra(extra), extractErrorInfo(error)),
                 this.prepareLogMessage(message),
             );
         } else if (extra) {
-            this.logger.error(
-                this.prepareExtra(this.mergeExtra(this.loggerExtra, extra)),
-                this.prepareLogMessage(message),
-            );
+            this.logger.error(this.prepareExtra(extra), this.prepareLogMessage(message));
         } else {
             this.logger.error(this.loggerExtra, this.prepareLogMessage(message));
         }
@@ -136,7 +129,7 @@ export class AppContext {
         this.span?.setTag(Tags.SAMPLING_PRIORITY, 1);
         this.span?.setTag(Tags.ERROR, true);
         this.span?.log(
-            Object.assign({}, this.prepareExtra(this.mergeExtra(this.loggerExtra, extra)), {
+            Object.assign({}, this.prepareExtra(extra), {
                 event: message,
                 stack: error instanceof Error && error?.stack,
             }),
@@ -258,10 +251,9 @@ export class AppContext {
     }
 
     private prepareExtra(extra: Dict | undefined) {
-        if (extra === undefined) {
-            return extra;
-        }
-        const preparedExtra = this.utils.redactSensitiveKeys(extra);
+        const mergedExtra = this.mergeExtra(this.loggerExtra, extra);
+
+        const preparedExtra = this.utils.redactSensitiveKeys(mergedExtra);
         return Object.keys(preparedExtra).length ? preparedExtra : undefined;
     }
 
