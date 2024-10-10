@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/gravity-ui/nodekit/compare/v1.5.0...v1.6.0) (2024-10-10)
+
+
+### Features
+
+* add re-export public consts ([#55](https://github.com/gravity-ui/nodekit/issues/55)) ([acc8dde](https://github.com/gravity-ui/nodekit/commit/acc8dde5d4e4b210948988fc04e7243df667af85))
+
 ## [1.5.0](https://github.com/gravity-ui/nodekit/compare/v1.4.0...v1.5.0) (2024-10-10)
 
 
