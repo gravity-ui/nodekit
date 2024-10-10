@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.5.0](https://github.com/gravity-ui/nodekit/compare/v1.4.0...v1.5.0) (2024-10-10)
+
+
+### Features
+
+* add ability to attach extra data to log lines ([#50](https://github.com/gravity-ui/nodekit/issues/50)) ([76eb406](https://github.com/gravity-ui/nodekit/commit/76eb4060fdcea61bb2d9a0f1254287835497ab2c))
+* add user language param ([#54](https://github.com/gravity-ui/nodekit/issues/54)) ([23aa1f6](https://github.com/gravity-ui/nodekit/commit/23aa1f6273873807e5a4ee060d278abcc007d7c5))
+
+
+### Bug Fixes
+
+* update dependencies ([#52](https://github.com/gravity-ui/nodekit/issues/52)) ([79cd488](https://github.com/gravity-ui/nodekit/commit/79cd488ba6ff1a49f69a2b8d5fc2f02735cd8d4f))
+
 ## [1.4.0](https://github.com/gravity-ui/nodekit/compare/v1.3.0...v1.4.0) (2024-07-25)
 
 
