@@ -23,6 +23,7 @@ interface ContextInitialParams {
     utils: NodeKit['utils'];
     dynamicConfig?: AppDynamicConfig;
     loggerPostfix?: string;
+    loggerExtra?: Dict;
     tags?: Dict;
 }
 
@@ -32,7 +33,10 @@ export interface AppTelemetrySendStats {
 }
 
 interface ContextParentParams
-    extends Pick<ContextInitialParams, 'parentSpanContext' | 'loggerPostfix' | 'tags'> {
+    extends Pick<
+        ContextInitialParams,
+        'parentSpanContext' | 'loggerPostfix' | 'loggerExtra' | 'tags'
+    > {
     parentContext: AppContext;
 }
 
@@ -58,6 +62,7 @@ export class AppContext {
     private endTime?: number;
     private loggerPrefix: string;
     private loggerPostfix: string;
+    private loggerExtra?: Dict;
 
     constructor(name: string, params: ContextParams) {
         this.name = name;
@@ -72,12 +77,18 @@ export class AppContext {
             this.appParams = Object.assign({}, params.parentContext?.appParams);
             this.loggerPrefix = `${params.parentContext.loggerPrefix} [${this.name}]`.trim();
             this.loggerPostfix = params.loggerPostfix || params.parentContext.loggerPostfix;
+            this.loggerExtra = this.mergeExtra(
+                params.parentContext.loggerExtra,
+                params.loggerExtra,
+            );
 
             this.span = this.tracer.startSpan(this.name, {
                 tags: this.utils.redactSensitiveKeys(params.tags || {}),
                 childOf: params.parentSpanContext || params.parentContext?.span,
             });
             this.stats = params.parentContext.stats;
+
+            this.parentContext = params.parentContext;
         } else if (params.config && params.logger && params.tracer && params.utils) {
             this.appParams = {};
             this.config = params.config;
@@ -87,6 +98,7 @@ export class AppContext {
             this.dynamicConfig = {};
             this.loggerPrefix = '';
             this.loggerPostfix = params.loggerPostfix || '';
+            this.loggerExtra = params.loggerExtra;
             this.stats = params.stats;
         } else {
             throw new Error(
@@ -95,34 +107,29 @@ export class AppContext {
         }
     }
 
-    log(message: string, extra: Dict = {}) {
-        this.logger.info(this.prepareExtra(extra), this.prepareLogMessage(message));
-        this.span?.log(Object.assign({}, this.utils.redactSensitiveKeys(extra), {event: message}));
+    log(message: string, extra?: Dict) {
+        const preparedExtra = this.prepareExtra(extra);
+
+        this.logger.info(preparedExtra, this.prepareLogMessage(message));
+        this.span?.log(Object.assign({}, preparedExtra, {event: message}));
     }
 
-    logError(message: string, error?: AppError | Error | unknown, extra: Dict = {}) {
+    logError(message: string, error?: AppError | Error | unknown, extra?: Dict) {
         if (error) {
             this.logger.error(
-                Object.assign({}, extractErrorInfo(error), {
-                    extra: this.utils.redactSensitiveKeys(extra),
-                }),
+                Object.assign({}, this.prepareExtra(extra), extractErrorInfo(error)),
                 this.prepareLogMessage(message),
             );
         } else if (extra) {
-            this.logger.error(
-                {
-                    extra: this.utils.redactSensitiveKeys(extra),
-                },
-                this.prepareLogMessage(message),
-            );
+            this.logger.error(this.prepareExtra(extra), this.prepareLogMessage(message));
         } else {
-            this.logger.error(this.prepareLogMessage(message));
+            this.logger.error(this.loggerExtra, this.prepareLogMessage(message));
         }
 
         this.span?.setTag(Tags.SAMPLING_PRIORITY, 1);
         this.span?.setTag(Tags.ERROR, true);
         this.span?.log(
-            Object.assign({}, this.utils.redactSensitiveKeys(extra), {
+            Object.assign({}, this.prepareExtra(extra), {
                 event: message,
                 stack: error instanceof Error && error?.stack,
             }),
@@ -230,12 +237,27 @@ export class AppContext {
         return this.span?._spanContext?.toTraceId();
     }
 
+    // allow add extra logger data, after ctx already initialized (ex. to add traceId from ctx)
+    addLoggerExtra(key: string, value: unknown) {
+        this.loggerExtra = this.mergeExtra(this.loggerExtra, {[key]: value});
+    }
+
+    clearLoggerExtra() {
+        this.loggerExtra = Object.assign({}, this.parentContext?.loggerExtra);
+    }
+
     private prepareLogMessage(message: string) {
         return `${this.loggerPrefix} ${message} ${this.loggerPostfix}`.trim();
     }
 
-    private prepareExtra(extra: Dict) {
-        const preparedExtra = this.utils.redactSensitiveKeys(extra);
+    private prepareExtra(extra: Dict | undefined) {
+        const mergedExtra = this.mergeExtra(this.loggerExtra, extra);
+
+        const preparedExtra = this.utils.redactSensitiveKeys(mergedExtra);
         return Object.keys(preparedExtra).length ? preparedExtra : undefined;
+    }
+
+    private mergeExtra(extraParent: Dict | undefined, extraCurrent: Dict | undefined) {
+        return Object.assign({}, extraParent, extraCurrent);
     }
 }
