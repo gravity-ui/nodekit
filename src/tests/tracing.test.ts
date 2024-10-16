@@ -24,8 +24,8 @@ const setupNodeKit = () => {
     return {
         nodekit,
         tracing: {
-            traceId,
-            spanId,
+            getTraceId: () => traceId,
+            getSpanId: () => spanId,
         },
     };
 };
@@ -35,6 +35,6 @@ test('check traceId and spanId exist at child ctx', () => {
 
     const ctx = nodekit.ctx.create('app');
 
-    expect(ctx.getTraceId()).toBe(tracing.traceId);
-    expect(ctx.getSpanId()).toBe(tracing.spanId);
+    expect(ctx.getTraceId()).toBe(tracing.getTraceId());
+    expect(ctx.getSpanId()).toBe(tracing.getSpanId());
 });
