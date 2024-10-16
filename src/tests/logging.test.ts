@@ -1,14 +1,20 @@
 import {NodeKit} from '..';
 
-const logger = {
-    write: jest.fn(),
+const setupNodeKit = () => {
+    const logger = {
+        write: jest.fn(),
+    };
+
+    const nodekit = new NodeKit({config: {appLoggingDestination: logger}});
+
+    return {nodekit, logger};
 };
 
 test('check base logging system', () => {
-    const nodeKit = new NodeKit({config: {appLoggingDestination: logger}});
+    const {nodekit, logger} = setupNodeKit();
 
     // log function
-    nodeKit.ctx.log('log info');
+    nodekit.ctx.log('log info');
     let log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
     expect(log).toMatchObject({
@@ -17,7 +23,7 @@ test('check base logging system', () => {
     });
 
     // logError function
-    nodeKit.ctx.logError('log error');
+    nodekit.ctx.logError('log error');
     log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
     expect(log).toMatchObject({
@@ -28,7 +34,7 @@ test('check base logging system', () => {
     // logError function with error object
     const err = new Error('error object');
 
-    nodeKit.ctx.logError('log error with error object', err);
+    nodekit.ctx.logError('log error with error object', err);
     log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
     expect(log).toMatchObject({
@@ -43,34 +49,34 @@ test('check base logging system', () => {
 });
 
 test('check logging with extra data', () => {
-    const nodeKit = new NodeKit({config: {appLoggingDestination: logger}});
+    const {nodekit, logger} = setupNodeKit();
 
     const extra = Math.random().toString();
 
     // log function with extra param
-    nodeKit.ctx.log('log info', {extra});
+    nodekit.ctx.log('log info', {extra});
     let log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
     expect(log).toMatchObject({extra});
 
     // add extra data to ctx
     const traceId = Math.random().toString();
-    nodeKit.ctx.addLoggerExtra('traceId', traceId);
+    nodekit.ctx.addLoggerExtra('traceId', traceId);
 
     // log function with extra ctx data
-    nodeKit.ctx.log('log info');
+    nodekit.ctx.log('log info');
     log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
     expect(log).toMatchObject({traceId});
 
     // log function with extra param and extra ctx data
-    nodeKit.ctx.log('log info', {extra});
+    nodekit.ctx.log('log info', {extra});
     log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
     expect(log).toMatchObject({traceId, extra});
 
     // logError function with extra param and extra ctx data
-    nodeKit.ctx.logError('log error', new Error('err'), {extra});
+    nodekit.ctx.logError('log error', new Error('err'), {extra});
     log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
     expect(log).toMatchObject({
@@ -81,20 +87,20 @@ test('check logging with extra data', () => {
 });
 
 test('check logging from nested ctx', () => {
-    const nodeKit = new NodeKit({config: {appLoggingDestination: logger}});
+    const {nodekit, logger} = setupNodeKit();
 
     const traceId = Math.random().toString();
-    nodeKit.ctx.addLoggerExtra('traceId', traceId);
+    nodekit.ctx.addLoggerExtra('traceId', traceId);
 
     // log function from parent ctx
-    nodeKit.ctx.log('log info');
+    nodekit.ctx.log('log info');
     let log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
     expect(log).toMatchObject({traceId});
 
     const ctxName = Math.random().toString();
     const logPostfix = Math.random().toString();
-    const newCtx = nodeKit.ctx.create(ctxName, {loggerPostfix: logPostfix});
+    const newCtx = nodekit.ctx.create(ctxName, {loggerPostfix: logPostfix});
 
     // log function from nested ctx
     newCtx.log('log info');
