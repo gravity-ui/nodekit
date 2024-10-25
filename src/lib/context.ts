@@ -233,8 +233,11 @@ export class AppContext {
     }
 
     getTraceId() {
-        // @ts-ignore
-        return this.span?._spanContext?.toTraceId();
+        return this.span?.context()?.toTraceId();
+    }
+
+    getSpanId() {
+        return this.span?.context()?.toSpanId();
     }
 
     // allow add extra logger data, after ctx already initialized (ex. to add traceId from ctx)
