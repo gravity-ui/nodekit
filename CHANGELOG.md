@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/gravity-ui/nodekit/compare/v1.6.0...v1.7.0) (2024-10-25)
+
+
+### Features
+
+* add spanId getter for app context ([#57](https://github.com/gravity-ui/nodekit/issues/57)) ([f0b4e02](https://github.com/gravity-ui/nodekit/commit/f0b4e023514f2a32fb8a2b0e4870f23bb11c1af6))
+
 ## [1.6.0](https://github.com/gravity-ui/nodekit/compare/v1.5.0...v1.6.0) (2024-10-10)
 
 
