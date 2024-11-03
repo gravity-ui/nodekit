@@ -1,11 +1,12 @@
 import {type NextFunction, type Request, type Response} from 'express';
 
-export const logRequestMiddleware = (_req: Request, _res: Response, next: NextFunction) => {
-    const mwCtx = _req.ctx.create('Log request parameters');
+export const logRequestMiddleware = (req: Request, _res: Response, next: NextFunction) => {
+    req.ctx.log('log request middleware');
+    const childCtx = req.ctx.create('Log request parameters');
 
-    mwCtx.setTag('request.method', _req.method);
-    mwCtx.setTag('request.url', _req.url);
+    childCtx.setTag('request.method', req.method);
+    childCtx.setTag('request.url', req.url);
 
-    mwCtx.end();
+    childCtx.end();
     next();
 };
