@@ -1,4 +1,53 @@
 import pino from 'pino';
+import {Dict} from '../types';
+
+export interface NodekitLogger {
+    info(message: string): void;
+    info(extra: Dict | undefined, message: string): void;
+
+    error(message: string): void;
+    error(extra: Dict | undefined, message: string): void;
+
+    warn(message: string): void;
+    warn(extra: Dict | undefined, message: string): void;
+}
+
+export class PinoLogger implements NodekitLogger {
+    private logger: pino.Logger;
+
+    constructor(logger: pino.Logger) {
+        this.logger = logger;
+    }
+    info(message: string): void;
+    info(extra: Dict | undefined, message: string): void;
+    info(msgOrExtra: string | Dict | undefined, message?: string): void {
+        if (typeof msgOrExtra === 'string') {
+            this.logger.info(message);
+        } else {
+            this.logger.info(msgOrExtra, message);
+        }
+    }
+
+    warn(message: string): void;
+    warn(extra: Dict | undefined, message: string): void;
+    warn(msgOrExtra: string | Dict | undefined, message?: string): void {
+        if (typeof msgOrExtra === 'string') {
+            this.logger.info(message);
+        } else {
+            this.logger.info(msgOrExtra, message);
+        }
+    }
+
+    error(message: string): void;
+    error(extra: Dict | undefined, message: string): void;
+    error(msgOrExtra: string | Dict | undefined, message?: string): void {
+        if (typeof msgOrExtra === 'string') {
+            this.logger.error(message);
+        } else {
+            this.logger.error(msgOrExtra, message);
+        }
+    }
+}
 
 /**
  * workaround to provide IntelliSense hints https://stackoverflow.com/a/61048124
@@ -34,9 +83,12 @@ export function initLogger({appName, devMode, destination, level = 'debug'}: Ini
         transport: transportConfig,
     };
 
+    let pinoInstance: pino.Logger;
     if (destination && !devMode) {
-        return pino(options, destination);
+        pinoInstance = pino(options, destination);
     } else {
-        return pino(options);
+        pinoInstance = pino(options);
     }
+
+    return new PinoLogger(pinoInstance);
 }

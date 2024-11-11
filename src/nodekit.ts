@@ -1,12 +1,11 @@
 import * as dotenv from 'dotenv';
 import {JaegerTracer, initTracer} from 'jaeger-client';
-import pino from 'pino';
 
 import {NODEKIT_BASE_CONFIG} from './lib/base-config';
 import {AppContext} from './lib/context';
 import {DynamicConfigPoller, DynamicConfigSetup} from './lib/dynamic-config-poller';
 import {loadFileConfigs} from './lib/file-configs';
-import {initLogger} from './lib/logging';
+import {NodekitLogger, initLogger} from './lib/logging';
 import {prepareClickhouseClient} from './lib/telemetry/clickhouse';
 import {isTrueEnvValue} from './lib/utils/is-true-env';
 import prepareSensitiveHeadersRedacter, {
@@ -38,7 +37,7 @@ export class NodeKit {
         isTrueEnvValue: typeof isTrueEnvValue;
     };
 
-    private logger: pino.Logger;
+    private logger: NodekitLogger;
     private tracer: JaegerTracer;
 
     private shutdownHandlers: ShutdownHandler[];
