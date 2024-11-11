@@ -1,5 +1,6 @@
 import {DiagLogLevel, diag} from '@opentelemetry/api';
 import {OTLPTraceExporter} from '@opentelemetry/exporter-trace-otlp-http';
+import {JaegerPropagator} from '@opentelemetry/propagator-jaeger';
 import {NodeSDK, core, resources, tracing} from '@opentelemetry/sdk-node';
 import {ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION} from '@opentelemetry/semantic-conventions';
 import type pino from 'pino';
@@ -8,7 +9,11 @@ import {DEFAULT_COLLECTOR_HOST} from '../consts';
 import {createPinoDiagLogger} from './pino-diag-logger';
 
 const textMapPropagator = new core.CompositePropagator({
-    propagators: [new core.W3CTraceContextPropagator(), new core.W3CBaggagePropagator()],
+    propagators: [
+        new core.W3CTraceContextPropagator(),
+        new core.W3CBaggagePropagator(),
+        new JaegerPropagator(),
+    ],
 });
 
 export const getTracingServiceName = (config: AppConfig) =>
