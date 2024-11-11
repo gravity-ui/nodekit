@@ -115,25 +115,22 @@ export class AppContext {
     }
 
     logError(message: string, error?: AppError | Error | unknown, extra?: Dict) {
-        if (error) {
-            this.logger.error(
-                Object.assign({}, this.prepareExtra(extra), extractErrorInfo(error)),
-                this.prepareLogMessage(message),
-            );
-        } else if (extra) {
-            this.logger.error(this.prepareExtra(extra), this.prepareLogMessage(message));
-        } else {
-            this.logger.error(this.loggerExtra, this.prepareLogMessage(message));
-        }
+        const preparedMessage = this.prepareLogMessage(message);
+        const preparedExtra = this.prepareExtra(extra);
+
+        const logObject = error
+            ? {...preparedExtra, ...extractErrorInfo(error)}
+            : preparedExtra || this.loggerExtra;
+
+        this.logger.error(logObject, preparedMessage);
 
         this.span?.setTag(Tags.SAMPLING_PRIORITY, 1);
         this.span?.setTag(Tags.ERROR, true);
-        this.span?.log(
-            Object.assign({}, this.prepareExtra(extra), {
-                event: message,
-                stack: error instanceof Error && error?.stack,
-            }),
-        );
+        this.span?.log({
+            ...preparedExtra,
+            event: message,
+            stack: error instanceof Error && error.stack,
+        });
     }
 
     logWarn(message: string, error?: AppError | Error | unknown, extra?: Dict) {
