@@ -2,6 +2,7 @@ import {NodeKit} from '@gravity-ui/nodekit';
 import path from 'path';
 import express, {type Request, type Response} from 'express';
 import {addCtxMiddleware, logRequestMiddleware} from './middlewares';
+import axios from 'axios';
 
 export const nodeKit = new NodeKit({configsPath: path.resolve(__dirname, 'configs')});
 const app = express();
@@ -14,8 +15,9 @@ const getRouteContextName = (req: Request) => `${req.method} : ${req.path}`;
 
 app.get('/', (req: Request, res: Response) => {
     const ctxName = getRouteContextName(req);
-    req.ctx.log(ctxName);
+
     const childCtx = req.ctx.create(ctxName);
+    childCtx.log(ctxName);
     const content = 'Hello, world';
     childCtx.setTag('content', content);
     childCtx.end();
@@ -26,9 +28,9 @@ app.get('/', (req: Request, res: Response) => {
 app.get('/error', (req: Request, res: Response) => {
     const ctxName = getRouteContextName(req);
 
-    req.ctx.log(ctxName);
-
     req.ctx.call(ctxName, (ctx) => {
+        ctx.log(ctxName);
+
         try {
             const json = JSON.parse('\\\\\\');
             ctx.end();
@@ -38,6 +40,26 @@ app.get('/error', (req: Request, res: Response) => {
 
             throw e;
         }
+    });
+});
+
+app.get('/propagation', (req: Request, res: Response) => {
+    const ctxName = getRouteContextName(req);
+
+    req.ctx.call(ctxName, (ctx) => {
+        const metadata = ctx.getMetadata();
+        axios
+            .get('http://localhost:16686/api/services', {headers: metadata})
+            .then(function (response) {
+                ctx.setTag('response', JSON.stringify(response?.data));
+                ctx.setTag('metadata', JSON.stringify(metadata));
+                ctx.end();
+                res.send(JSON.stringify(response?.data));
+            })
+            .catch(function (error) {
+                res.status(500).send('Internal server ertror');
+                throw error;
+            });
     });
 });
 
