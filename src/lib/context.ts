@@ -136,6 +136,23 @@ export class AppContext {
         );
     }
 
+    logWarn(message: string, error?: AppError | Error | unknown, extra?: Dict) {
+        const preparedMessage = this.prepareLogMessage(message);
+        const preparedExtra = this.prepareExtra(extra);
+
+        const logObject = error
+            ? {...preparedExtra, ...extractErrorInfo(error)}
+            : preparedExtra || this.loggerExtra;
+
+        this.logger.warn(logObject, preparedMessage);
+
+        this.span?.log({
+            ...preparedExtra,
+            event: message,
+            stack: error instanceof Error && error.stack,
+        });
+    }
+
     create(name: string, params?: Omit<ContextParentParams, 'parentContext'>) {
         return new AppContext(name, {parentContext: this, ...params});
     }
