@@ -118,9 +118,7 @@ export class AppContext {
         const preparedMessage = this.prepareLogMessage(message);
         const preparedExtra = this.prepareExtra(extra);
 
-        const logObject = error
-            ? {...preparedExtra, ...extractErrorInfo(error)}
-            : preparedExtra || this.loggerExtra;
+        const logObject = this.getLogObject(error, extra);
 
         this.logger.error(logObject, preparedMessage);
 
@@ -137,9 +135,7 @@ export class AppContext {
         const preparedMessage = this.prepareLogMessage(message);
         const preparedExtra = this.prepareExtra(extra);
 
-        const logObject = error
-            ? {...preparedExtra, ...extractErrorInfo(error)}
-            : preparedExtra || this.loggerExtra;
+        const logObject = this.getLogObject(error, extra);
 
         this.logger.warn(logObject, preparedMessage);
 
@@ -276,5 +272,15 @@ export class AppContext {
 
     private mergeExtra(extraParent: Dict | undefined, extraCurrent: Dict | undefined) {
         return Object.assign({}, extraParent, extraCurrent);
+    }
+
+    private getLogObject(error: Error | unknown, extra: Dict | undefined) {
+        if (error) {
+            return {...this.prepareExtra(extra), ...extractErrorInfo(error)};
+        } else if (extra) {
+            return this.prepareExtra(extra);
+        } else {
+            return this.loggerExtra;
+        }
     }
 }
