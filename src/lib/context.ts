@@ -140,10 +140,7 @@ export class AppContext {
 
         this.logger.info(preparedExtra, preparedMessage);
 
-        this.span?.addEvent(
-            preparedMessage,
-            this.createAttributes(Object.assign({}, preparedExtra)),
-        );
+        this.span?.addEvent(message, this.createAttributes(Object.assign({}, preparedExtra)));
     }
 
     logError(message: string, error?: AppError | Error | unknown, extra?: Dict) {
@@ -156,13 +153,13 @@ export class AppContext {
 
         this.span?.setStatus({
             code: SpanStatusCode.ERROR,
-            message: preparedMessage,
+            message: message,
         });
         this.span?.addEvent(
-            preparedMessage,
+            message,
             this.createAttributes(
                 Object.assign({}, this.prepareExtra(extra), {
-                    event: preparedMessage,
+                    event: message,
                     stack: error instanceof Error && error?.stack,
                 }),
             ),
