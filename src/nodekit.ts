@@ -1,5 +1,4 @@
 import * as dotenv from 'dotenv';
-import {JaegerTracer, initTracer} from 'jaeger-client';
 
 import {NODEKIT_BASE_CONFIG} from './lib/base-config';
 import {AppContext} from './lib/context';
@@ -7,6 +6,7 @@ import {DynamicConfigPoller, DynamicConfigSetup} from './lib/dynamic-config-poll
 import {loadFileConfigs} from './lib/file-configs';
 import {NodeKitLogger, initLogger} from './lib/logging';
 import {prepareClickhouseClient} from './lib/telemetry/clickhouse';
+import {initTracing} from './lib/tracing/init-tracing';
 import {isTrueEnvValue} from './lib/utils/is-true-env';
 import prepareSensitiveHeadersRedacter, {
     SensitiveHeadersRedacter,
@@ -38,7 +38,6 @@ export class NodeKit {
     };
 
     private logger: NodeKitLogger;
-    private tracer: JaegerTracer;
 
     private shutdownHandlers: ShutdownHandler[];
 
@@ -100,47 +99,25 @@ export class NodeKit {
             isTrueEnvValue,
         };
 
-        this.tracer = initTracer(
-            {
-                disable: !(this.config.appTracingEnabled === true),
-                serviceName: this.config.appTracingServiceName || this.config.appName,
-                sampler: this.config.appTracingSampler || {type: 'probabilistic', param: 1},
-                reporter: {
-                    logSpans: this.config.appTracingDebugLogging,
-                    agentHost: this.config.appTracingAgentHost,
-                    agentPort: this.config.appTracingAgentPort,
-                    collectorEndpoint: this.config.appTracingCollectorEndpoint,
-                },
-            },
-            {
-                logger: {
-                    info: (msg: string) => this.logger.info(msg),
-                    error: (msg: string) => this.logger.error(msg),
-                },
-            },
-        );
+        if (this.config.appTracingEnabled === true) {
+            const tracingSdk = initTracing(this.config, this.logger);
+
+            this.addShutdownHandler(
+                () =>
+                    new Promise((resolve) => {
+                        tracingSdk.shutdown().then(resolve);
+                    }),
+            );
+        }
 
         this.ctx = new AppContext('app', {
             config: this.config,
             logger: this.logger,
-            tracer: this.tracer,
             utils: this.utils,
             stats: () => {},
         });
 
         this.ctx.stats = prepareClickhouseClient(this.ctx);
-
-        this.addShutdownHandler(
-            () =>
-                new Promise<void>((resolve) => {
-                    // if tracing is disabled, initTracer returns object without close method
-                    if (typeof this.tracer.close === 'function') {
-                        this.tracer.close(resolve);
-                    } else {
-                        resolve();
-                    }
-                }),
-        );
 
         this.setupShutdownSignals();
     }
