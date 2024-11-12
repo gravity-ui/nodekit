@@ -1,7 +1,7 @@
 import pino from 'pino';
 import {Dict} from '../types';
 
-export interface NodekitLogger {
+export interface NodeKitLogger {
     info(message: string): void;
     info(extra: Dict | undefined, message: string): void;
 
@@ -18,7 +18,7 @@ export interface NodekitLogger {
     debug(extra: Dict | undefined, message: string): void;
 }
 
-export class PinoLogger implements NodekitLogger {
+export class PinoLogger implements NodeKitLogger {
     private logger: pino.Logger;
 
     constructor(logger: pino.Logger) {

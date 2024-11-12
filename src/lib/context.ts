@@ -9,14 +9,14 @@ import {AppConfig, AppContextParams, AppDynamicConfig, Dict} from '../types';
 import {AppError} from './app-error';
 import {REQUEST_ID_HEADER, REQUEST_ID_PARAM_NAME} from './consts';
 import {extractErrorInfo} from './error-parser';
-import {NodekitLogger} from './logging';
+import {NodeKitLogger} from './logging';
 
 type ContextParams = ContextInitialParams | ContextParentParams;
 
 interface ContextInitialParams {
     contextId?: string;
     config: AppConfig;
-    logger: NodekitLogger;
+    logger: NodeKitLogger;
     tracer: JaegerTracer;
     stats: AppTelemetrySendStats;
     parentSpanContext?: SpanContext;
@@ -55,7 +55,7 @@ export class AppContext {
 
     protected appParams: AppContextParams;
     protected name: string;
-    private logger: NodekitLogger;
+    private logger: NodeKitLogger;
     private tracer: JaegerTracer;
     private span?: Span;
     private startTime: number;

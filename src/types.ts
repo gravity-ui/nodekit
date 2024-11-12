@@ -1,7 +1,7 @@
 import type {pino} from 'pino';
 
 import {REQUEST_ID_PARAM_NAME, USER_ID_PARAM_NAME, USER_LANGUAGE_PARAM_NAME} from './lib/consts';
-import type {LoggingLevel, NodekitLogger} from './lib/logging';
+import type {LoggingLevel, NodeKitLogger} from './lib/logging';
 
 export interface AppConfig {
     appName?: string;
@@ -24,7 +24,7 @@ export interface AppConfig {
 
     appLoggingDestination?: pino.DestinationStream;
     appLoggingLevel?: LoggingLevel;
-    appLogger?: NodekitLogger;
+    appLogger?: NodeKitLogger;
 
     appTracingEnabled?: boolean;
     appTracingServiceName?: string;

@@ -1,4 +1,4 @@
-import {NodeKit, NodekitLogger} from '..';
+import {NodeKit, NodeKitLogger} from '..';
 import {Dict} from '../types';
 
 const setupNodeKit = () => {
@@ -144,7 +144,7 @@ test('logging with a custom logger', () => {
     const infoLog = jest.fn();
     const errorLog = jest.fn();
     const traceLog = jest.fn();
-    class CustomLogger implements NodekitLogger {
+    class CustomLogger implements NodeKitLogger {
         warn(msgOrObject: string | Dict | undefined, message?: string) {
             warnLog(msgOrObject, message);
         }

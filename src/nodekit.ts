@@ -5,7 +5,7 @@ import {NODEKIT_BASE_CONFIG} from './lib/base-config';
 import {AppContext} from './lib/context';
 import {DynamicConfigPoller, DynamicConfigSetup} from './lib/dynamic-config-poller';
 import {loadFileConfigs} from './lib/file-configs';
-import {NodekitLogger, initLogger} from './lib/logging';
+import {NodeKitLogger, initLogger} from './lib/logging';
 import {prepareClickhouseClient} from './lib/telemetry/clickhouse';
 import {isTrueEnvValue} from './lib/utils/is-true-env';
 import prepareSensitiveHeadersRedacter, {
@@ -37,7 +37,7 @@ export class NodeKit {
         isTrueEnvValue: typeof isTrueEnvValue;
     };
 
-    private logger: NodekitLogger;
+    private logger: NodeKitLogger;
     private tracer: JaegerTracer;
 
     private shutdownHandlers: ShutdownHandler[];
