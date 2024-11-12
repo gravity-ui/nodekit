@@ -1,4 +1,5 @@
-import {NodeKit} from '..';
+import {NodeKit, NodekitLogger} from '..';
+import {Dict} from '../types';
 
 const setupNodeKit = () => {
     const logger = {
@@ -135,4 +136,66 @@ test('check logging from nested ctx', () => {
         anotherTraceId,
         msg: `[${ctxName}] log error ${logPostfix}`,
     });
+});
+
+test('logging with a custom logger', () => {
+    const warnLog = jest.fn();
+    const debugLog = jest.fn();
+    const infoLog = jest.fn();
+    const errorLog = jest.fn();
+    const traceLog = jest.fn();
+    class CustomLogger implements NodekitLogger {
+        warn(msgOrObject: string | Dict | undefined, message?: string) {
+            warnLog(msgOrObject, message);
+        }
+        debug(msgOrObject: string | Dict | undefined, message?: string) {
+            debugLog(msgOrObject, message);
+        }
+        info(msgOrObject: string | Dict | undefined, message?: string) {
+            infoLog(msgOrObject, message);
+        }
+        error(msgOrObject: string | Dict | undefined, message?: string) {
+            errorLog(msgOrObject, message);
+        }
+        trace(msgOrObject: string | Dict | undefined, message?: string) {
+            traceLog(msgOrObject, message);
+        }
+    }
+
+    const customLogger = new CustomLogger();
+    const nodekit = new NodeKit({
+        config: {
+            appLogger: customLogger,
+        },
+    });
+
+    const ctx = nodekit.ctx.create('test_ctx');
+
+    ctx.log('test');
+
+    expect(infoLog).toHaveBeenCalledWith(undefined, '[test_ctx] test');
+
+    const err = new Error('test errorLog');
+    ctx.logError('errorLog message', err);
+    expect(errorLog).toHaveBeenCalledWith(
+        {
+            err: {
+                message: 'test errorLog',
+                stack: err.stack,
+            },
+        },
+        '[test_ctx] errorLog message',
+    );
+
+    const warnErr = new Error('test warnLog');
+    ctx.logWarn('warnLog message', warnErr);
+    expect(warnLog).toHaveBeenCalledWith(
+        {
+            err: {
+                message: 'test warnLog',
+                stack: warnErr.stack,
+            },
+        },
+        '[test_ctx] warnLog message',
+    );
 });
