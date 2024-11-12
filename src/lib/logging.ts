@@ -10,6 +10,12 @@ export interface NodekitLogger {
 
     warn(message: string): void;
     warn(extra: Dict | undefined, message: string): void;
+
+    trace(message: string): void;
+    trace(extra: Dict | undefined, message: string): void;
+
+    debug(message: string): void;
+    debug(extra: Dict | undefined, message: string): void;
 }
 
 export class PinoLogger implements NodekitLogger {
@@ -45,6 +51,26 @@ export class PinoLogger implements NodekitLogger {
             this.logger.error(message);
         } else {
             this.logger.error(msgOrExtra, message);
+        }
+    }
+
+    trace(message: string): void;
+    trace(extra: Dict | undefined, message: string): void;
+    trace(msgOrExtra: string | Dict | undefined, message?: string): void {
+        if (typeof msgOrExtra === 'string') {
+            this.logger.trace(message);
+        } else {
+            this.logger.trace(msgOrExtra, message);
+        }
+    }
+
+    debug(message: string): void;
+    debug(extra: Dict | undefined, message: string): void;
+    debug(msgOrExtra: string | Dict | undefined, message?: string): void {
+        if (typeof msgOrExtra === 'string') {
+            this.logger.debug(message);
+        } else {
+            this.logger.debug(msgOrExtra, message);
         }
     }
 }
