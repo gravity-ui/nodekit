@@ -122,7 +122,11 @@ const ctx = nodekit.ctx.create('requestContext', {
   parentSpanContext: nodekit.ctx.extractSpanContext(req.headers),
   spanKind: SpanKind.SERVER,
 });
+```
 
+Read more about spanKind in OpenTelemetry [docs](https://opentelemetry.io/docs/specs/otel/trace/api/#spankind)
+
+```typescript
 // Attaching trace information to outgoing request:
 fetch('https://some-url/', {
   headers: {
