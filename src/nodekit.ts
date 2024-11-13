@@ -1,12 +1,11 @@
 import * as dotenv from 'dotenv';
 import {JaegerTracer, initTracer} from 'jaeger-client';
-import pino from 'pino';
 
 import {NODEKIT_BASE_CONFIG} from './lib/base-config';
 import {AppContext} from './lib/context';
 import {DynamicConfigPoller, DynamicConfigSetup} from './lib/dynamic-config-poller';
 import {loadFileConfigs} from './lib/file-configs';
-import {initLogger} from './lib/logging';
+import {NodeKitLogger, initLogger} from './lib/logging';
 import {prepareClickhouseClient} from './lib/telemetry/clickhouse';
 import {isTrueEnvValue} from './lib/utils/is-true-env';
 import prepareSensitiveHeadersRedacter, {
@@ -38,7 +37,7 @@ export class NodeKit {
         isTrueEnvValue: typeof isTrueEnvValue;
     };
 
-    private logger: pino.Logger;
+    private logger: NodeKitLogger;
     private tracer: JaegerTracer;
 
     private shutdownHandlers: ShutdownHandler[];
@@ -65,12 +64,16 @@ export class NodeKit {
             appLoggingLevel: process.env.APP_LOGGING_LEVEL || fileConfig.appLoggingLevel,
         });
 
-        this.logger = initLogger({
-            appName: this.config.appName as string,
-            devMode: appDevMode,
-            destination: this.config.appLoggingDestination,
-            level: this.config.appLoggingLevel,
-        });
+        if (this.config.appLogger) {
+            this.logger = this.config.appLogger;
+        } else {
+            this.logger = initLogger({
+                appName: this.config.appName as string,
+                devMode: appDevMode,
+                destination: this.config.appLoggingDestination,
+                level: this.config.appLoggingLevel,
+            });
+        }
 
         const redactSensitiveQueryParams = prepareSensitiveQueryParamsRedacter(
             this.config.nkDefaultSensitiveQueryParams?.concat(

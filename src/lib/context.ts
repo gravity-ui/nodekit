@@ -2,7 +2,6 @@ import {IncomingHttpHeaders} from 'http';
 
 import {JaegerTracer} from 'jaeger-client';
 import {FORMAT_HTTP_HEADERS, Span, SpanContext, Tags} from 'opentracing';
-import pino from 'pino';
 
 import {NodeKit} from '../nodekit';
 import {AppConfig, AppContextParams, AppDynamicConfig, Dict} from '../types';
@@ -10,13 +9,14 @@ import {AppConfig, AppContextParams, AppDynamicConfig, Dict} from '../types';
 import {AppError} from './app-error';
 import {REQUEST_ID_HEADER, REQUEST_ID_PARAM_NAME} from './consts';
 import {extractErrorInfo} from './error-parser';
+import {NodeKitLogger} from './logging';
 
 type ContextParams = ContextInitialParams | ContextParentParams;
 
 interface ContextInitialParams {
     contextId?: string;
     config: AppConfig;
-    logger: pino.Logger;
+    logger: NodeKitLogger;
     tracer: JaegerTracer;
     stats: AppTelemetrySendStats;
     parentSpanContext?: SpanContext;
@@ -55,7 +55,7 @@ export class AppContext {
 
     protected appParams: AppContextParams;
     protected name: string;
-    private logger: pino.Logger;
+    private logger: NodeKitLogger;
     private tracer: JaegerTracer;
     private span?: Span;
     private startTime: number;
@@ -115,25 +115,35 @@ export class AppContext {
     }
 
     logError(message: string, error?: AppError | Error | unknown, extra?: Dict) {
-        if (error) {
-            this.logger.error(
-                Object.assign({}, this.prepareExtra(extra), extractErrorInfo(error)),
-                this.prepareLogMessage(message),
-            );
-        } else if (extra) {
-            this.logger.error(this.prepareExtra(extra), this.prepareLogMessage(message));
-        } else {
-            this.logger.error(this.loggerExtra, this.prepareLogMessage(message));
-        }
+        const preparedMessage = this.prepareLogMessage(message);
+        const preparedExtra = this.prepareExtra(extra);
+
+        const logObject = this.getLogObject(error, extra);
+
+        this.logger.error(logObject, preparedMessage);
 
         this.span?.setTag(Tags.SAMPLING_PRIORITY, 1);
         this.span?.setTag(Tags.ERROR, true);
-        this.span?.log(
-            Object.assign({}, this.prepareExtra(extra), {
-                event: message,
-                stack: error instanceof Error && error?.stack,
-            }),
-        );
+        this.span?.log({
+            ...preparedExtra,
+            event: message,
+            stack: error instanceof Error && error.stack,
+        });
+    }
+
+    logWarn(message: string, error?: AppError | Error | unknown, extra?: Dict) {
+        const preparedMessage = this.prepareLogMessage(message);
+        const preparedExtra = this.prepareExtra(extra);
+
+        const logObject = this.getLogObject(error, extra);
+
+        this.logger.warn(logObject, preparedMessage);
+
+        this.span?.log({
+            ...preparedExtra,
+            event: message,
+            stack: error instanceof Error && error.stack,
+        });
     }
 
     create(name: string, params?: Omit<ContextParentParams, 'parentContext'>) {
@@ -262,5 +272,15 @@ export class AppContext {
 
     private mergeExtra(extraParent: Dict | undefined, extraCurrent: Dict | undefined) {
         return Object.assign({}, extraParent, extraCurrent);
+    }
+
+    private getLogObject(error: Error | unknown, extra: Dict | undefined) {
+        if (error) {
+            return {...this.prepareExtra(extra), ...extractErrorInfo(error)};
+        } else if (extra) {
+            return this.prepareExtra(extra);
+        } else {
+            return this.loggerExtra;
+        }
     }
 }
