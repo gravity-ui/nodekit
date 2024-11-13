@@ -4,7 +4,6 @@ import {JaegerPropagator} from '@opentelemetry/propagator-jaeger';
 import {NodeSDK, core, resources, tracing} from '@opentelemetry/sdk-node';
 import {ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION} from '@opentelemetry/semantic-conventions';
 import type {AppConfig} from '../../types';
-import {DEFAULT_COLLECTOR_HOST} from '../consts';
 import {createNodekitDiagLogger} from './nodekit-diag-logger';
 import type {NodeKitLogger} from '../logging';
 
@@ -37,7 +36,7 @@ export const initTracing = (config: AppConfig, logger: NodeKitLogger) => {
         traceExporter:
             appTracingSpanExporter ||
             new OTLPTraceExporter({
-                url: appTracingCollectorEndpoint || DEFAULT_COLLECTOR_HOST,
+                url: appTracingCollectorEndpoint,
             }),
         textMapPropagator,
         sampler: appTracingSampler || new tracing.TraceIdRatioBasedSampler(1),

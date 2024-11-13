@@ -7,12 +7,9 @@ function logFn(
     logFunction: (extra: Dict | undefined, message: string) => void,
 ): DiagLogFunction {
     return (message, ...args) => {
-        const data = args.reduce((acc: Record<string, any>, cur, index) => {
+        const data = args.reduce((acc: Record<string, unknown>, cur, index) => {
             if (typeof cur === 'object' && !Array.isArray(cur)) {
-                acc = {
-                    ...acc,
-                    ...cur,
-                };
+                Object.assign(acc, cur);
             } else if (Array.isArray(cur)) {
                 acc[index] = cur;
             }
