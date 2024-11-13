@@ -1,5 +1,7 @@
 import type {pino} from 'pino';
 
+import type {NodeSDKConfiguration} from '@opentelemetry/sdk-node';
+
 import {REQUEST_ID_PARAM_NAME, USER_ID_PARAM_NAME, USER_LANGUAGE_PARAM_NAME} from './lib/consts';
 import type {LoggingLevel, NodeKitLogger} from './lib/logging';
 
@@ -27,11 +29,35 @@ export interface AppConfig {
     appLogger?: NodeKitLogger;
 
     appTracingEnabled?: boolean;
+    /**
+     * Service name for all created spans.
+     * @default appName from AppConfig
+     */
     appTracingServiceName?: string;
+    /**
+     * Enable debug for tracing with {@link DiagLogLevel.DEBUG}. Will be printed with pino.
+     * @default false
+     */
     appTracingDebugLogging?: boolean;
-    appTracingSampler?: {type: string; param: number};
-    appTracingAgentHost?: string;
-    appTracingAgentPort?: number;
+    /**
+     * Tracing sampler. By default write all spans.
+     * @default tracing.TraceIdRatioBasedSampler(1)
+     */
+    appTracingSampler?: NodeSDKConfiguration['sampler'];
+    /**
+     * Tracing span exporter. By default write all spans.
+     * @default OTLPTraceExporter({ url: appTracingCollectorEndpoint }
+     */
+    appTracingSpanExporter?: NodeSDKConfiguration['traceExporter'];
+    /**
+     * Additional autoinstrumentations.
+     * @default []
+     */
+    appTracingInstrumentations?: NodeSDKConfiguration['instrumentations'];
+    /**
+     * Tracing collector endpoint.
+     * @default http://localhost:4318/v1/traces
+     */
     appTracingCollectorEndpoint?: string;
 
     appTelemetryChHost?: string;
@@ -61,3 +87,4 @@ export interface ShutdownHandler {
 export interface TelemetryClickhouseTableDescription {
     [name: string]: 'number' | 'string' | 'timestamp';
 }
+export {SpanKind} from '@opentelemetry/api';

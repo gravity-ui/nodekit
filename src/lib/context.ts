@@ -1,14 +1,24 @@
+import {
+    type AttributeValue,
+    type Attributes,
+    type Context,
+    type Span,
+    SpanKind,
+    SpanStatusCode,
+    propagation,
+    trace,
+} from '@opentelemetry/api';
 import {IncomingHttpHeaders} from 'http';
-
-import {JaegerTracer} from 'jaeger-client';
-import {FORMAT_HTTP_HEADERS, Span, SpanContext, Tags} from 'opentracing';
 
 import {NodeKit} from '../nodekit';
 import {AppConfig, AppContextParams, AppDynamicConfig, Dict} from '../types';
 
+import {api, core} from '@opentelemetry/sdk-node';
 import {AppError} from './app-error';
 import {REQUEST_ID_HEADER, REQUEST_ID_PARAM_NAME} from './consts';
 import {extractErrorInfo} from './error-parser';
+import {getTracingServiceName} from './tracing/init-tracing';
+import {headerGetter, headerSetter} from './utils/header-utils';
 import {NodeKitLogger} from './logging';
 
 type ContextParams = ContextInitialParams | ContextParentParams;
@@ -17,9 +27,9 @@ interface ContextInitialParams {
     contextId?: string;
     config: AppConfig;
     logger: NodeKitLogger;
-    tracer: JaegerTracer;
     stats: AppTelemetrySendStats;
-    parentSpanContext?: SpanContext;
+    parentSpanContext?: Context;
+    spanKind?: SpanKind;
     utils: NodeKit['utils'];
     dynamicConfig?: AppDynamicConfig;
     loggerPostfix?: string;
@@ -35,7 +45,7 @@ export interface AppTelemetrySendStats {
 interface ContextParentParams
     extends Pick<
         ContextInitialParams,
-        'parentSpanContext' | 'loggerPostfix' | 'loggerExtra' | 'tags'
+        'parentSpanContext' | 'loggerPostfix' | 'loggerExtra' | 'tags' | 'spanKind'
     > {
     parentContext: AppContext;
 }
@@ -56,7 +66,6 @@ export class AppContext {
     protected appParams: AppContextParams;
     protected name: string;
     private logger: NodeKitLogger;
-    private tracer: JaegerTracer;
     private span?: Span;
     private startTime: number;
     private endTime?: number;
@@ -71,7 +80,6 @@ export class AppContext {
         if (isContextParentParams(params)) {
             this.config = params.parentContext.config;
             this.logger = params.parentContext.logger;
-            this.tracer = params.parentContext.tracer;
             this.utils = params.parentContext.utils;
             this.dynamicConfig = params.parentContext.dynamicConfig;
             this.appParams = Object.assign({}, params.parentContext?.appParams);
@@ -82,18 +90,36 @@ export class AppContext {
                 params.loggerExtra,
             );
 
-            this.span = this.tracer.startSpan(this.name, {
-                tags: this.utils.redactSensitiveKeys(params.tags || {}),
-                childOf: params.parentSpanContext || params.parentContext?.span,
-            });
+            if (this.isTracingEnabled(this.tracer)) {
+                let parrentSpanContext: Context | undefined;
+
+                if (params?.parentSpanContext) {
+                    parrentSpanContext = params?.parentSpanContext;
+                } else if (params.parentContext.span) {
+                    parrentSpanContext = trace.setSpan(
+                        api.context.active(),
+                        params.parentContext.span,
+                    );
+                }
+
+                this.span = this.tracer.startSpan(
+                    this.name,
+                    {
+                        attributes: this.createAttributes(
+                            this.utils.redactSensitiveKeys(params.tags || {}),
+                        ),
+                        kind: params.spanKind,
+                    },
+                    parrentSpanContext,
+                );
+            }
             this.stats = params.parentContext.stats;
 
             this.parentContext = params.parentContext;
-        } else if (params.config && params.logger && params.tracer && params.utils) {
+        } else if (params.config && params.logger && params.utils) {
             this.appParams = {};
             this.config = params.config;
             this.logger = params.logger;
-            this.tracer = params.tracer;
             this.utils = params.utils;
             this.dynamicConfig = {};
             this.loggerPrefix = '';
@@ -111,39 +137,42 @@ export class AppContext {
         const preparedExtra = this.prepareExtra(extra);
 
         this.logger.info(preparedExtra, this.prepareLogMessage(message));
-        this.span?.log(Object.assign({}, preparedExtra, {event: message}));
+        this.span?.addEvent(message, this.createAttributes({...preparedExtra}));
     }
 
     logError(message: string, error?: AppError | Error | unknown, extra?: Dict) {
         const preparedMessage = this.prepareLogMessage(message);
         const preparedExtra = this.prepareExtra(extra);
-
         const logObject = this.getLogObject(error, extra);
-
         this.logger.error(logObject, preparedMessage);
 
-        this.span?.setTag(Tags.SAMPLING_PRIORITY, 1);
-        this.span?.setTag(Tags.ERROR, true);
-        this.span?.log({
-            ...preparedExtra,
-            event: message,
-            stack: error instanceof Error && error.stack,
+        this.span?.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: message,
         });
+        this.span?.addEvent(
+            message,
+            this.createAttributes({
+                ...preparedExtra,
+                event: message,
+                stack: error instanceof Error && error?.stack,
+            }),
+        );
     }
 
     logWarn(message: string, error?: AppError | Error | unknown, extra?: Dict) {
         const preparedMessage = this.prepareLogMessage(message);
         const preparedExtra = this.prepareExtra(extra);
-
         const logObject = this.getLogObject(error, extra);
-
         this.logger.warn(logObject, preparedMessage);
-
-        this.span?.log({
-            ...preparedExtra,
-            event: message,
-            stack: error instanceof Error && error.stack,
-        });
+        this.span?.addEvent(
+            message,
+            this.createAttributes({
+                ...preparedExtra,
+                event: message,
+                stack: error instanceof Error && error.stack,
+            }),
+        );
     }
 
     create(name: string, params?: Omit<ContextParentParams, 'parentContext'>) {
@@ -199,14 +228,14 @@ export class AppContext {
         return this.appParams[key];
     }
 
-    setTag(key: string, value: unknown) {
-        this.span?.setTag(key, value);
+    setTag(key: string, value: AttributeValue) {
+        this.span?.setAttribute(key, value);
     }
 
     end() {
         this.endTime = Date.now();
         if (this.span) {
-            this.span.finish();
+            this.span.end();
         }
     }
 
@@ -214,7 +243,7 @@ export class AppContext {
         this.endTime = Date.now();
         this.logError('context failed', error);
         if (this.span) {
-            this.span.finish();
+            this.span.end();
         }
     }
 
@@ -226,8 +255,8 @@ export class AppContext {
         }
     }
 
-    extractSpanContext(headers: IncomingHttpHeaders): SpanContext | undefined {
-        return this.tracer.extract(FORMAT_HTTP_HEADERS, headers) as SpanContext;
+    extractSpanContext(headers: IncomingHttpHeaders) {
+        return propagation.extract(api.context.active(), headers, headerGetter);
     }
 
     getMetadata() {
@@ -237,17 +266,26 @@ export class AppContext {
             metadata[REQUEST_ID_HEADER] = requestId;
         }
         if (this.span) {
-            this.tracer.inject(this.span, FORMAT_HTTP_HEADERS, metadata);
+            propagation.inject(
+                trace.setSpan(api.context.active(), this.span),
+                metadata,
+                headerSetter,
+            );
         }
         return metadata;
     }
 
-    getTraceId() {
-        return this.span?.context()?.toTraceId();
+    getTraceId(): string | undefined {
+        if (!this.span) {
+            this.log('Span is undefined');
+            return undefined;
+        }
+        return this.span.spanContext().traceId;
     }
 
     getSpanId() {
-        return this.span?.context()?.toSpanId();
+        if (!this.span) return undefined;
+        return this.span.spanContext().spanId;
     }
 
     // allow add extra logger data, after ctx already initialized (ex. to add traceId from ctx)
@@ -257,6 +295,15 @@ export class AppContext {
 
     clearLoggerExtra() {
         this.loggerExtra = Object.assign({}, this.parentContext?.loggerExtra);
+    }
+
+    get tracer() {
+        if (!this.config.appTracingEnabled) return undefined;
+        return trace.getTracer(getTracingServiceName(this.config));
+    }
+
+    private isTracingEnabled(_tracer?: api.Tracer): _tracer is api.Tracer {
+        return this.config.appTracingEnabled === true;
     }
 
     private prepareLogMessage(message: string) {
@@ -282,5 +329,16 @@ export class AppContext {
         } else {
             return this.loggerExtra;
         }
+    }
+
+    private createAttributes(dict: Dict) {
+        const attributes: Attributes = {};
+        Object.entries(dict).forEach(([key, value]) => {
+            if (core.isAttributeValue(value) && typeof key === 'string') {
+                attributes[key] = value;
+            }
+        });
+
+        return attributes;
     }
 }

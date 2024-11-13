@@ -101,9 +101,7 @@ You can override default logs destination (stdout) with `appLoggingDestination` 
 
 ## Distributed tracing
 
-**Note: currently NodeKit uses OpenTelemetry & jaeger-client for tracing. However, we're planning to move to the OpenTelemetry libraries. See [this issue](https://github.com/gravity-ui/nodekit/issues/2) for more details.**
-
-NodeKit Contexts are integrated with [Jaeger Tracing](https://www.jaegertracing.io). If tracing is enabled in your application, each created context (except the root one) will create jaeger span alongside it. Logs are working too: they're added to spans as events.
+NodeKit Contexts are integrated with [Opentelemetry tracing](https://opentelemetry.io/). If tracing is enabled in your application, each created context (except the root one) will create span alongside it. Logs are working too: they're added to spans as events.
 
 You can also set tags for spans:
 
@@ -122,8 +120,13 @@ Code examples for both cases:
 // Extracing trace information from incoming http headers and creating span based on that info:
 const ctx = nodekit.ctx.create('requestContext', {
   parentSpanContext: nodekit.ctx.extractSpanContext(req.headers),
+  spanKind: SpanKind.SERVER,
 });
+```
 
+Read more about spanKind in OpenTelemetry [docs](https://opentelemetry.io/docs/specs/otel/trace/api/#spankind)
+
+```typescript
 // Attaching trace information to outgoing request:
 fetch('https://some-url/', {
   headers: {
@@ -135,7 +138,7 @@ fetch('https://some-url/', {
 
 ### Failed spans
 
-Spans in jaeger can be marked as failed, highlighting traces with them in Jaeger UI. It can be done in a number of ways:
+Spans can be marked as failed, highlighting traces with them in any distributed tracing UI. It can be done in a number of ways:
 
 - Any span that calls `logError()` would be marked as failed automatically
 - Spans in call()-generated context would be marked as failed if call() callback fails
