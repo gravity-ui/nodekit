@@ -3,10 +3,10 @@ import {OTLPTraceExporter} from '@opentelemetry/exporter-trace-otlp-http';
 import {JaegerPropagator} from '@opentelemetry/propagator-jaeger';
 import {NodeSDK, core, resources, tracing} from '@opentelemetry/sdk-node';
 import {ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION} from '@opentelemetry/semantic-conventions';
-import type pino from 'pino';
 import type {AppConfig} from '../../types';
 import {DEFAULT_COLLECTOR_HOST} from '../consts';
-import {createPinoDiagLogger} from './pino-diag-logger';
+import {createNodekitDiagLogger} from './nodekit-diag-logger';
+import type {NodeKitLogger} from '../logging';
 
 const textMapPropagator = new core.CompositePropagator({
     propagators: [
@@ -19,7 +19,7 @@ const textMapPropagator = new core.CompositePropagator({
 export const getTracingServiceName = (config: AppConfig) =>
     config?.appTracingServiceName || String(config.appName);
 
-export const initTracing = (config: AppConfig, logger: pino.Logger) => {
+export const initTracing = (config: AppConfig, logger: NodeKitLogger) => {
     const {
         appVersion,
         appTracingSampler,
@@ -45,7 +45,7 @@ export const initTracing = (config: AppConfig, logger: pino.Logger) => {
     });
 
     if (appTracingDebugLogging) {
-        diag.setLogger(createPinoDiagLogger(logger), DiagLogLevel.DEBUG);
+        diag.setLogger(createNodekitDiagLogger(logger), DiagLogLevel.DEBUG);
     }
 
     sdk.start();

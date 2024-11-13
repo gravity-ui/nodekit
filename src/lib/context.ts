@@ -10,7 +10,6 @@ import {
 } from '@opentelemetry/api';
 import {IncomingHttpHeaders} from 'http';
 
-
 import {NodeKit} from '../nodekit';
 import {AppConfig, AppContextParams, AppDynamicConfig, Dict} from '../types';
 
@@ -136,19 +135,15 @@ export class AppContext {
 
     log(message: string, extra?: Dict) {
         const preparedExtra = this.prepareExtra(extra);
-        const preparedMessage = this.prepareLogMessage(message);
 
-        this.logger.info(preparedExtra, preparedMessage);
-
-        this.span?.addEvent(message, this.createAttributes(Object.assign({}, preparedExtra)));
+        this.logger.info(preparedExtra, this.prepareLogMessage(message));
+        this.span?.addEvent(message, this.createAttributes({...preparedExtra}));
     }
 
     logError(message: string, error?: AppError | Error | unknown, extra?: Dict) {
         const preparedMessage = this.prepareLogMessage(message);
         const preparedExtra = this.prepareExtra(extra);
-
         const logObject = this.getLogObject(error, extra);
-
         this.logger.error(logObject, preparedMessage);
 
         this.span?.setStatus({
@@ -157,12 +152,26 @@ export class AppContext {
         });
         this.span?.addEvent(
             message,
-            this.createAttributes(
-                Object.assign({}, this.prepareExtra(extra), {
-                    event: message,
-                    stack: error instanceof Error && error?.stack,
-                }),
-            ),
+            this.createAttributes({
+                ...preparedExtra,
+                event: message,
+                stack: error instanceof Error && error?.stack,
+            }),
+        );
+    }
+
+    logWarn(message: string, error?: AppError | Error | unknown, extra?: Dict) {
+        const preparedMessage = this.prepareLogMessage(message);
+        const preparedExtra = this.prepareExtra(extra);
+        const logObject = this.getLogObject(error, extra);
+        this.logger.warn(logObject, preparedMessage);
+        this.span?.addEvent(
+            message,
+            this.createAttributes({
+                ...preparedExtra,
+                event: message,
+                stack: error instanceof Error && error.stack,
+            }),
         );
     }
 

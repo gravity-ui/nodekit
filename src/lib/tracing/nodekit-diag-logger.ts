@@ -1,9 +1,13 @@
 import type {DiagLogFunction, DiagLogger} from '@opentelemetry/api';
-import type pino from 'pino';
+import type {NodeKitLogger} from '../logging';
+import type {Dict} from '../../types';
 
-function logFn(this: unknown, logFunction: pino.LogFn): DiagLogFunction {
+function logFn(
+    this: unknown,
+    logFunction: (extra: Dict | undefined, message: string) => void,
+): DiagLogFunction {
     return (message, ...args) => {
-        const data = args.reduce((acc: Record<string, unknown>, cur, index) => {
+        const data = args.reduce((acc: Record<string, any>, cur, index) => {
             if (typeof cur === 'object' && !Array.isArray(cur)) {
                 acc = {
                     ...acc,
@@ -20,7 +24,7 @@ function logFn(this: unknown, logFunction: pino.LogFn): DiagLogFunction {
     };
 }
 
-export const createPinoDiagLogger = (logger: pino.Logger): DiagLogger => {
+export const createNodekitDiagLogger = (logger: NodeKitLogger): DiagLogger => {
     return {
         verbose: logFn(logger.trace.bind(logger)),
         debug: logFn(logger.debug.bind(logger)),
