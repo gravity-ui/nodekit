@@ -71,8 +71,6 @@ export interface AppConfig {
     appTelemetryChMirrorToLogs?: boolean;
 }
 
-export interface TracingAppConfig {}
-
 export interface AppContextParams {
     [REQUEST_ID_PARAM_NAME]?: string;
     [USER_ID_PARAM_NAME]?: string;
