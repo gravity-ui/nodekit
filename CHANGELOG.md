@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.0.0](https://github.com/gravity-ui/nodekit/compare/v1.7.0...v2.0.0) (2024-11-14)
+
+
+### chore
+
+* release 2.0.0 ([#63](https://github.com/gravity-ui/nodekit/issues/63)) ([19b90c6](https://github.com/gravity-ui/nodekit/commit/19b90c6827f00e5b9c38416264007455a21c0258))
+
+
+### Features
+
+* refactor logging ([dfeae88](https://github.com/gravity-ui/nodekit/commit/dfeae88759bc642d4cf94789bbab93bb2c77e61a))
+* use opentelemetry library for tracing ([#60](https://github.com/gravity-ui/nodekit/issues/60)) ([a2e9653](https://github.com/gravity-ui/nodekit/commit/a2e9653e0952fa8d82d9716570847c45f127475e))
+
 ## [1.7.0](https://github.com/gravity-ui/nodekit/compare/v1.6.0...v1.7.0) (2024-10-25)
 
 
