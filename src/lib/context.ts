@@ -275,6 +275,18 @@ export class AppContext {
         return metadata;
     }
 
+    injectMetadata(metadata: IncomingHttpHeaders) {
+        if (this.span) {
+            propagation.inject(
+                trace.setSpan(api.context.active(), this.span),
+                metadata,
+                headerSetter,
+            );
+            return true;
+        }
+        return false;
+    }
+
     getTraceId(): string | undefined {
         if (!this.span) {
             this.log('Span is undefined');
