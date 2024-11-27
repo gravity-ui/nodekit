@@ -4,6 +4,10 @@
   "description": "Simple toolkit for your Node.js apps and scripts",
   "license": "MIT",
   "author": "Gravity UI Team",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gravity-ui/nodekit"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
