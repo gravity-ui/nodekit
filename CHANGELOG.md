@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/gravity-ui/nodekit/compare/v2.0.0...v2.1.0) (2024-12-03)
+
+
+### Features
+
+* export SpanKind ([#66](https://github.com/gravity-ui/nodekit/issues/66)) ([3fe1487](https://github.com/gravity-ui/nodekit/commit/3fe14874743c2e402e3f532a7040efb745f86505))
+
 ## [2.0.0](https://github.com/gravity-ui/nodekit/compare/v1.7.0...v2.0.0) (2024-11-14)
 
 
