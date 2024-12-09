@@ -6,7 +6,7 @@
   "author": "Gravity UI Team",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gravity-ui/nodekit"
+    "url": "git+https://github.com/gravity-ui/nodekit.git"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
