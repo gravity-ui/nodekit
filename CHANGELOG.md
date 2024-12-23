@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/gravity-ui/nodekit/compare/v2.1.0...v2.2.0) (2024-12-23)
+
+
+### Features
+
+* add export for initTracing function ([#70](https://github.com/gravity-ui/nodekit/issues/70)) ([e01f2c4](https://github.com/gravity-ui/nodekit/commit/e01f2c42e35604c6be07fa1fca3fd0911bf35de2))
+
 ## [2.1.0](https://github.com/gravity-ui/nodekit/compare/v2.0.0...v2.1.0) (2024-12-03)
 
 
