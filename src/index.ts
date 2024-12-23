@@ -4,4 +4,5 @@ export {AppConfig, AppContextParams, AppDynamicConfig, SpanKind} from './types';
 export {AppError} from './lib/app-error';
 export {DynamicConfigSetup} from './lib/dynamic-config-poller';
 export {NodeKitLogger} from './lib/logging';
+export {initTracing} from './lib/tracing/init-tracing';
 export * from './lib/public-consts';
