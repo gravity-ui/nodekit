@@ -13,7 +13,7 @@ import {
 } from '../utils/batch';
 
 function escape(input = '') {
-    return input.replace(/\\/g, '\\').replace(/'/g, "\\'");
+    return input.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
 interface InsertData {
