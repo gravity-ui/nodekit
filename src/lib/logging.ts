@@ -38,9 +38,9 @@ export class PinoLogger implements NodeKitLogger {
     warn(extra: Dict | undefined, message: string): void;
     warn(msgOrExtra: string | Dict | undefined, message?: string): void {
         if (typeof msgOrExtra === 'string') {
-            this.logger.info(message);
+            this.logger.warn(message);
         } else {
-            this.logger.info(msgOrExtra, message);
+            this.logger.warn(msgOrExtra, message);
         }
     }
 
