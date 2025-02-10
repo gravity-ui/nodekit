@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/gravity-ui/nodekit/compare/v2.2.0...v2.2.1) (2025-02-10)
+
+
+### Bug Fixes
+
+* **telemetry:** improve ch escape, fix warn logs level ([dda91ed](https://github.com/gravity-ui/nodekit/commit/dda91edca6fd428de03e9f74fc8ab67aa1d51e86))
+
 ## [2.2.0](https://github.com/gravity-ui/nodekit/compare/v2.1.0...v2.2.0) (2024-12-23)
 
 
