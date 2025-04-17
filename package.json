@@ -25,6 +25,7 @@
     "watch": "tsc -w"
   },
   "dependencies": {
+    "@grpc/grpc-js": "^1.13.3",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/exporter-trace-otlp-grpc": "^0.54.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.54.0",

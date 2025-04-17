@@ -1,3 +1,4 @@
+import {credentials} from '@grpc/grpc-js';
 import {DiagLogLevel, diag} from '@opentelemetry/api';
 import {OTLPTraceExporter as OTLPTraceExporterHTTP} from '@opentelemetry/exporter-trace-otlp-http';
 import {OTLPTraceExporter as OTLPTraceExporterProto} from '@opentelemetry/exporter-trace-otlp-proto';
@@ -42,6 +43,7 @@ export const initTracing = (config: AppConfig, logger: NodeKitLogger) => {
     } else if (appTracingCollectorProtocol === 'gRPC') {
         tracingSpanExporter = new OTLPTraceExporterGRPC({
             url: appTracingCollectorEndpoint,
+            credentials: credentials.createInsecure(),
         });
     } else {
         tracingSpanExporter = new OTLPTraceExporterHTTP({
