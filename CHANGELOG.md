@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/gravity-ui/nodekit/compare/v2.2.1...v2.3.0) (2025-04-18)
+
+
+### Features
+
+* add proto and grpc tracing exporters ([#75](https://github.com/gravity-ui/nodekit/issues/75)) ([af6502e](https://github.com/gravity-ui/nodekit/commit/af6502e6f45885380d28ef6999ec59f7ec9a9251))
+
 ## [2.2.1](https://github.com/gravity-ui/nodekit/compare/v2.2.0...v2.2.1) (2025-02-10)
 
 
