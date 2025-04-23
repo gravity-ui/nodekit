@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/gravity-ui/nodekit/compare/v2.3.0...v2.3.1) (2025-04-23)
+
+
+### Bug Fixes
+
+* add tracing prop for disabling tls for grpc protocol ([#79](https://github.com/gravity-ui/nodekit/issues/79)) ([ab0749b](https://github.com/gravity-ui/nodekit/commit/ab0749bfd4d55e1a1e7ec5ae909b3c74b2e8b1fe))
+
 ## [2.3.0](https://github.com/gravity-ui/nodekit/compare/v2.2.1...v2.3.0) (2025-04-18)
 
 
