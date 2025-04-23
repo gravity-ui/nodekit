@@ -65,6 +65,11 @@ export interface AppConfig {
      * @default HTTP/JSON
      */
     appTracingCollectorProtocol?: 'HTTP/JSON' | 'HTTP/Proto' | 'gRPC';
+    /**
+     * Disable TLS for gRPC protocol.
+     * @default undefined
+     */
+    appTracingDisableTLS?: boolean | undefined;
 
     appTelemetryChHost?: string;
     appTelemetryChPort?: string;

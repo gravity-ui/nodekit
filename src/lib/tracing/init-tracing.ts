@@ -30,6 +30,7 @@ export const initTracing = (config: AppConfig, logger: NodeKitLogger) => {
         appTracingDebugLogging,
         appTracingSpanExporter,
         appTracingCollectorProtocol,
+        appTracingDisableTLS,
     } = config;
 
     let tracingSpanExporter: tracing.SpanExporter;
@@ -43,7 +44,7 @@ export const initTracing = (config: AppConfig, logger: NodeKitLogger) => {
     } else if (appTracingCollectorProtocol === 'gRPC') {
         tracingSpanExporter = new OTLPTraceExporterGRPC({
             url: appTracingCollectorEndpoint,
-            credentials: credentials.createInsecure(),
+            credentials: appTracingDisableTLS ? credentials.createInsecure() : undefined,
         });
     } else {
         tracingSpanExporter = new OTLPTraceExporterHTTP({
