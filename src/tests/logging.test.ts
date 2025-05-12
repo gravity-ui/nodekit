@@ -1,16 +1,8 @@
 import {NodeKit, NodeKitLogger} from '..';
 import {Dict} from '../types';
 
-const genRandomId = (length: number) => {
-    const characters = '0123456789abcde';
-    let result = '';
-
-    for (let i = 0; i < length; i += 1) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        result += characters.charAt(randomIndex);
-    }
-
-    return result;
+const genRandomId = (length = 16) => {
+    return [...Array(length)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
 };
 
 const setupNodeKit = () => {
