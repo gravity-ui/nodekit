@@ -1,12 +1,24 @@
 import {NodeKit, NodeKitLogger} from '..';
 import {Dict} from '../types';
 
+const genRandomId = (length: number) => {
+    const characters = '0123456789abcde';
+    let result = '';
+
+    for (let i = 0; i < length; i += 1) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        result += characters.charAt(randomIndex);
+    }
+
+    return result;
+};
+
 const setupNodeKit = () => {
     const logger = {
         write: jest.fn(),
     };
 
-    const nodekit = new NodeKit({config: {appLoggingDestination: logger}});
+    const nodekit = new NodeKit({config: {appLoggingDestination: logger, appTracingEnabled: true}});
 
     return {nodekit, logger};
 };
@@ -61,20 +73,20 @@ test('check logging with extra data', () => {
     expect(log).toMatchObject({extra});
 
     // add extra data to ctx
-    const traceId = Math.random().toString();
-    nodekit.ctx.addLoggerExtra('traceId', traceId);
+    const extraId = Math.random().toString();
+    nodekit.ctx.addLoggerExtra('extraId', extraId);
 
     // log function with extra ctx data
     nodekit.ctx.log('log info');
     log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
-    expect(log).toMatchObject({traceId});
+    expect(log).toMatchObject({extraId});
 
     // log function with extra param and extra ctx data
     nodekit.ctx.log('log info', {extra});
     log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
-    expect(log).toMatchObject({traceId, extra});
+    expect(log).toMatchObject({extraId, extra});
 
     // logError function with extra param and extra ctx data
     nodekit.ctx.logError('log error', new Error('err'), {extra});
@@ -82,7 +94,7 @@ test('check logging with extra data', () => {
 
     expect(log).toMatchObject({
         extra,
-        traceId,
+        extraId,
         level: 50,
     });
 });
@@ -90,14 +102,14 @@ test('check logging with extra data', () => {
 test('check logging from nested ctx', () => {
     const {nodekit, logger} = setupNodeKit();
 
-    const traceId = Math.random().toString();
-    nodekit.ctx.addLoggerExtra('traceId', traceId);
+    const extraId = Math.random().toString();
+    nodekit.ctx.addLoggerExtra('extraId', extraId);
 
     // log function from parent ctx
     nodekit.ctx.log('log info');
     let log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
-    expect(log).toMatchObject({traceId});
+    expect(log).toMatchObject({extraId});
 
     const ctxName = Math.random().toString();
     const logPostfix = Math.random().toString();
@@ -107,34 +119,66 @@ test('check logging from nested ctx', () => {
     newCtx.log('log info');
     log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
-    expect(log).toMatchObject({traceId, msg: `[${ctxName}] log info ${logPostfix}`});
+    expect(log).toMatchObject({extraId, msg: `[${ctxName}] log info ${logPostfix}`});
 
     // log function from nested ctx with override data
-    const anotherTraceId = Math.random().toString();
-    newCtx.addLoggerExtra('traceId', anotherTraceId);
+    const anotherExtraId = Math.random().toString();
+    newCtx.addLoggerExtra('extraId', anotherExtraId);
 
     newCtx.log('log info');
     log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
-    expect(log).toMatchObject({traceId: anotherTraceId});
+    expect(log).toMatchObject({extraId: anotherExtraId});
 
     // log function from nested ctx with new data
     newCtx.clearLoggerExtra();
-    newCtx.addLoggerExtra('anotherTraceId', anotherTraceId);
+    newCtx.addLoggerExtra('anotherExtraId', anotherExtraId);
 
     newCtx.log('log info');
     log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
-    expect(log).toMatchObject({traceId, anotherTraceId});
+    expect(log).toMatchObject({extraId, anotherExtraId});
 
     // logError function from nested ctx with new data
     newCtx.logError('log error');
     log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
 
     expect(log).toMatchObject({
-        traceId,
-        anotherTraceId,
+        extraId,
+        anotherExtraId,
         msg: `[${ctxName}] log error ${logPostfix}`,
+    });
+});
+
+test('check logging spanId and traceId', () => {
+    const {nodekit, logger} = setupNodeKit();
+
+    const UBER_TRACE_ID_KEY = 'uber-trace-id';
+
+    const traceId = genRandomId(32);
+    const spanId = genRandomId(16);
+    const traceFlags = '01';
+    const uberTraceId = `${traceId}:${spanId}:0:${traceFlags}`;
+
+    const headersMock = {[UBER_TRACE_ID_KEY]: uberTraceId};
+
+    const parentSpanContext = nodekit.ctx.extractSpanContext(headersMock);
+
+    const ctxName = Math.random().toString();
+    const logPostfix = Math.random().toString();
+
+    const newCtx = nodekit.ctx.create(ctxName, {parentSpanContext, loggerPostfix: logPostfix});
+
+    const newSpanId = newCtx.getSpanId();
+
+    // log function from nested ctx
+    newCtx.log('log info');
+    const log = JSON.parse(logger.write.mock.lastCall?.pop() || '{}');
+
+    expect(log).toMatchObject({
+        traceId,
+        spanId: newSpanId,
+        msg: `[${ctxName}] log info ${logPostfix}`,
     });
 });
 
