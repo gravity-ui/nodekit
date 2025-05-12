@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0](https://github.com/gravity-ui/nodekit/compare/v2.3.1...v2.4.0) (2025-05-12)
+
+
+### Features
+
+* add spanId to all logs from ctx ([#81](https://github.com/gravity-ui/nodekit/issues/81)) ([ed17862](https://github.com/gravity-ui/nodekit/commit/ed17862318cb00311d07096800b2226d1640b073))
+
 ## [2.3.1](https://github.com/gravity-ui/nodekit/compare/v2.3.0...v2.3.1) (2025-04-23)
 
 
