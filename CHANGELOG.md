@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.1](https://github.com/gravity-ui/nodekit/compare/v2.4.0...v2.4.1) (2025-05-13)
+
+
+### Bug Fixes
+
+* alway override spanId with actual value ([#83](https://github.com/gravity-ui/nodekit/issues/83)) ([a2679b1](https://github.com/gravity-ui/nodekit/commit/a2679b13deccae0bb2594c38f7b74bda1c4c47cf))
+
 ## [2.4.0](https://github.com/gravity-ui/nodekit/compare/v2.3.1...v2.4.0) (2025-05-12)
 
 
