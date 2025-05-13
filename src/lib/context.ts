@@ -120,7 +120,7 @@ export class AppContext {
                 if (traceId && !this.getLoggerExtra('traceId')) {
                     this.addLoggerExtra('traceId', traceId);
                 }
-                if (spanId && !this.getLoggerExtra('spanId')) {
+                if (spanId) {
                     this.addLoggerExtra('spanId', spanId);
                 }
             }
