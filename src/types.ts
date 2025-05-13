@@ -59,6 +59,17 @@ export interface AppConfig {
      * @default http://localhost:4318/v1/traces
      */
     appTracingCollectorEndpoint?: string;
+    /**
+     * Protocols to transport trace data.
+     * https://opentelemetry.io/docs/languages/js/exporters/#otlp-dependencies
+     * @default HTTP/JSON
+     */
+    appTracingCollectorProtocol?: 'HTTP/JSON' | 'HTTP/Proto' | 'gRPC';
+    /**
+     * Disable TLS for gRPC protocol.
+     * @default undefined
+     */
+    appTracingDisableTLS?: boolean | undefined;
 
     appTelemetryChHost?: string;
     appTelemetryChPort?: string;

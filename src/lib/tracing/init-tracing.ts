@@ -1,5 +1,8 @@
+import {credentials} from '@grpc/grpc-js';
 import {DiagLogLevel, diag} from '@opentelemetry/api';
-import {OTLPTraceExporter} from '@opentelemetry/exporter-trace-otlp-http';
+import {OTLPTraceExporter as OTLPTraceExporterHTTP} from '@opentelemetry/exporter-trace-otlp-http';
+import {OTLPTraceExporter as OTLPTraceExporterProto} from '@opentelemetry/exporter-trace-otlp-proto';
+import {OTLPTraceExporter as OTLPTraceExporterGRPC} from '@opentelemetry/exporter-trace-otlp-grpc';
 import {JaegerPropagator} from '@opentelemetry/propagator-jaeger';
 import {NodeSDK, core, resources, tracing} from '@opentelemetry/sdk-node';
 import {ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION} from '@opentelemetry/semantic-conventions';
@@ -26,18 +29,35 @@ export const initTracing = (config: AppConfig, logger: NodeKitLogger) => {
         appTracingCollectorEndpoint,
         appTracingDebugLogging,
         appTracingSpanExporter,
+        appTracingCollectorProtocol,
+        appTracingDisableTLS,
     } = config;
+
+    let tracingSpanExporter: tracing.SpanExporter;
+
+    if (appTracingSpanExporter) {
+        tracingSpanExporter = appTracingSpanExporter;
+    } else if (appTracingCollectorProtocol === 'HTTP/Proto') {
+        tracingSpanExporter = new OTLPTraceExporterProto({
+            url: appTracingCollectorEndpoint,
+        });
+    } else if (appTracingCollectorProtocol === 'gRPC') {
+        tracingSpanExporter = new OTLPTraceExporterGRPC({
+            url: appTracingCollectorEndpoint,
+            credentials: appTracingDisableTLS ? credentials.createInsecure() : undefined,
+        });
+    } else {
+        tracingSpanExporter = new OTLPTraceExporterHTTP({
+            url: appTracingCollectorEndpoint,
+        });
+    }
 
     const sdk = new NodeSDK({
         resource: new resources.Resource({
             [ATTR_SERVICE_NAME]: getTracingServiceName(config),
             [ATTR_SERVICE_VERSION]: appVersion,
         }),
-        traceExporter:
-            appTracingSpanExporter ||
-            new OTLPTraceExporter({
-                url: appTracingCollectorEndpoint,
-            }),
+        traceExporter: tracingSpanExporter,
         textMapPropagator,
         sampler: appTracingSampler || new tracing.TraceIdRatioBasedSampler(1),
         instrumentations: appTracingInstrumentations,

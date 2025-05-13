@@ -112,6 +112,17 @@ export class AppContext {
                     },
                     parrentSpanContext,
                 );
+
+                // fill traceId and spanId at logger extra data
+                const traceId = this.getTraceId();
+                const spanId = this.getSpanId();
+
+                if (traceId && !this.getLoggerExtra('traceId')) {
+                    this.addLoggerExtra('traceId', traceId);
+                }
+                if (spanId) {
+                    this.addLoggerExtra('spanId', spanId);
+                }
             }
             this.stats = params.parentContext.stats;
 
@@ -291,6 +302,10 @@ export class AppContext {
     // allow add extra logger data, after ctx already initialized (ex. to add traceId from ctx)
     addLoggerExtra(key: string, value: unknown) {
         this.loggerExtra = this.mergeExtra(this.loggerExtra, {[key]: value});
+    }
+
+    getLoggerExtra(key: string): unknown {
+        return this.loggerExtra?.[key];
     }
 
     clearLoggerExtra() {

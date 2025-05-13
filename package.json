@@ -1,6 +1,6 @@
 {
   "name": "@gravity-ui/nodekit",
-  "version": "2.2.1",
+  "version": "2.4.1",
   "description": "Simple toolkit for your Node.js apps and scripts",
   "license": "MIT",
   "author": "Gravity UI Team",
@@ -25,8 +25,11 @@
     "watch": "tsc -w"
   },
   "dependencies": {
+    "@grpc/grpc-js": "^1.13.3",
     "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/exporter-trace-otlp-grpc": "^0.54.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.54.0",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.54.0",
     "@opentelemetry/propagator-jaeger": "^1.27.0",
     "@opentelemetry/sdk-node": "^0.54.0",
     "@opentelemetry/semantic-conventions": "^1.27.0",

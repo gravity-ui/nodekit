@@ -1,5 +1,33 @@
 # Changelog
 
+## [2.4.1](https://github.com/gravity-ui/nodekit/compare/v2.4.0...v2.4.1) (2025-05-13)
+
+
+### Bug Fixes
+
+* alway override spanId with actual value ([#83](https://github.com/gravity-ui/nodekit/issues/83)) ([a2679b1](https://github.com/gravity-ui/nodekit/commit/a2679b13deccae0bb2594c38f7b74bda1c4c47cf))
+
+## [2.4.0](https://github.com/gravity-ui/nodekit/compare/v2.3.1...v2.4.0) (2025-05-12)
+
+
+### Features
+
+* add spanId to all logs from ctx ([#81](https://github.com/gravity-ui/nodekit/issues/81)) ([ed17862](https://github.com/gravity-ui/nodekit/commit/ed17862318cb00311d07096800b2226d1640b073))
+
+## [2.3.1](https://github.com/gravity-ui/nodekit/compare/v2.3.0...v2.3.1) (2025-04-23)
+
+
+### Bug Fixes
+
+* add tracing prop for disabling tls for grpc protocol ([#79](https://github.com/gravity-ui/nodekit/issues/79)) ([ab0749b](https://github.com/gravity-ui/nodekit/commit/ab0749bfd4d55e1a1e7ec5ae909b3c74b2e8b1fe))
+
+## [2.3.0](https://github.com/gravity-ui/nodekit/compare/v2.2.1...v2.3.0) (2025-04-18)
+
+
+### Features
+
+* add proto and grpc tracing exporters ([#75](https://github.com/gravity-ui/nodekit/issues/75)) ([af6502e](https://github.com/gravity-ui/nodekit/commit/af6502e6f45885380d28ef6999ec59f7ec9a9251))
+
 ## [2.2.1](https://github.com/gravity-ui/nodekit/compare/v2.2.0...v2.2.1) (2025-02-10)
 
 
