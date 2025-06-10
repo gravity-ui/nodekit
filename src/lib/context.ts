@@ -132,7 +132,7 @@ export class AppContext {
             this.config = params.config;
             this.logger = params.logger;
             this.utils = params.utils;
-            this.dynamicConfig = {};
+            this.dynamicConfig = params.dynamicConfig || {};
             this.loggerPrefix = '';
             this.loggerPostfix = params.loggerPostfix || '';
             this.loggerExtra = params.loggerExtra;
