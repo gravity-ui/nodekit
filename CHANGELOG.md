@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.2](https://github.com/gravity-ui/nodekit/compare/v2.4.1...v2.4.2) (2025-06-10)
+
+
+### Bug Fixes
+
+* fix dynamic config initialization ([#85](https://github.com/gravity-ui/nodekit/issues/85)) ([9b5c7d0](https://github.com/gravity-ui/nodekit/commit/9b5c7d0ba76075cf23d89d0552e73e38916aad2a))
+
 ## [2.4.1](https://github.com/gravity-ui/nodekit/compare/v2.4.0...v2.4.1) (2025-05-13)
 
 
