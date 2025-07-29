@@ -1,6 +1,6 @@
 # NodeKit: AppError
 
-It's often happens in applications that you want to attach some information to the error that you're throwing. Sometimes this can lead to the situtaion when application throws not error but object — which is a bad way to deal with this since you're losing a stacktrace.
+It's often happens in applications that you want to attach some information to the error that you're throwing. Sometimes this can lead to the situation when application throws not error but object — which is a bad way to deal with this since you're losing a stacktrace.
 
 AppError is an extension of the standard Error class. It provides a way to attach data to the error object and also provides a few useful functions.
 
