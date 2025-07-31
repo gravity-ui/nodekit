@@ -20,6 +20,7 @@ import {extractErrorInfo} from './error-parser';
 import {getTracingServiceName} from './tracing/init-tracing';
 import {headerGetter, headerSetter} from './utils/header-utils';
 import {NodeKitLogger} from './logging';
+import {isDefined} from './utils/is-defined';
 
 type ContextParams = ContextInitialParams | ContextParentParams;
 
@@ -35,6 +36,7 @@ interface ContextInitialParams {
     loggerPostfix?: string;
     loggerExtra?: Dict;
     tags?: Dict;
+    abortSignal?: AbortSignal;
 }
 
 export interface AppTelemetrySendStats {
@@ -45,7 +47,7 @@ export interface AppTelemetrySendStats {
 interface ContextParentParams
     extends Pick<
         ContextInitialParams,
-        'parentSpanContext' | 'loggerPostfix' | 'loggerExtra' | 'tags' | 'spanKind'
+        'parentSpanContext' | 'loggerPostfix' | 'loggerExtra' | 'tags' | 'spanKind' | 'abortSignal'
     > {
     parentContext: AppContext;
 }
@@ -62,6 +64,7 @@ export class AppContext {
     utils: NodeKit['utils'];
     stats: AppTelemetrySendStats;
     dynamicConfig: AppDynamicConfig;
+    abortSignal: AbortSignal;
 
     protected appParams: AppContextParams;
     protected name: string;
@@ -72,10 +75,12 @@ export class AppContext {
     private loggerPrefix: string;
     private loggerPostfix: string;
     private loggerExtra?: Dict;
+    private abortController: AbortController;
 
     constructor(name: string, params: ContextParams) {
         this.name = name;
         this.startTime = Date.now();
+        this.abortController = new AbortController();
 
         if (isContextParentParams(params)) {
             this.config = params.parentContext.config;
@@ -88,6 +93,14 @@ export class AppContext {
             this.loggerExtra = this.mergeExtra(
                 params.parentContext.loggerExtra,
                 params.loggerExtra,
+            );
+
+            this.abortSignal = AbortSignal.any(
+                [
+                    params.parentContext.abortSignal,
+                    params.abortSignal,
+                    this.abortController.signal,
+                ].filter(isDefined),
             );
 
             if (this.isTracingEnabled(this.tracer)) {
@@ -137,6 +150,9 @@ export class AppContext {
             this.loggerPostfix = params.loggerPostfix || '';
             this.loggerExtra = params.loggerExtra;
             this.stats = params.stats;
+            this.abortSignal = AbortSignal.any(
+                [params.abortSignal, this.abortController.signal].filter(isDefined),
+            );
         } else {
             throw new Error(
                 'AppContext constructor requires either parent context or configuration',
@@ -245,6 +261,7 @@ export class AppContext {
 
     end() {
         this.endTime = Date.now();
+        this.abortController.abort();
         if (this.span) {
             this.span.end();
         }
@@ -253,6 +270,7 @@ export class AppContext {
     fail(error?: AppError | Error | unknown) {
         this.endTime = Date.now();
         this.logError('context failed', error);
+        this.abortController.abort();
         if (this.span) {
             this.span.end();
         }
