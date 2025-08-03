@@ -76,6 +76,7 @@ export class AppContext {
     private loggerPostfix: string;
     private loggerExtra?: Dict;
     private abortController: AbortController;
+    private error: AppError | Error | unknown | null = null;
 
     constructor(name: string, params: ContextParams) {
         this.name = name;
@@ -158,6 +159,19 @@ export class AppContext {
                 'AppContext constructor requires either parent context or configuration',
             );
         }
+
+        const onAbort = () => {
+            this.endTime = Date.now();
+            if (this.error) {
+                this.logError('context failed', this.error);
+            }
+            this.abortController.abort();
+            if (this.span) {
+                this.span.end();
+            }
+        };
+
+        this.abortSignal.addEventListener('abort', onAbort);
     }
 
     log(message: string, extra?: Dict) {
@@ -260,20 +274,21 @@ export class AppContext {
     }
 
     end() {
-        this.endTime = Date.now();
-        this.abortController.abort();
-        if (this.span) {
-            this.span.end();
+        if (this.abortSignal.aborted) {
+            return;
         }
+
+        this.error = null;
+        this.abortController.abort();
     }
 
     fail(error?: AppError | Error | unknown) {
-        this.endTime = Date.now();
-        this.logError('context failed', error);
-        this.abortController.abort();
-        if (this.span) {
-            this.span.end();
+        if (this.abortSignal.aborted) {
+            return;
         }
+
+        this.error = error ?? null;
+        this.abortController.abort();
     }
 
     getTime() {
