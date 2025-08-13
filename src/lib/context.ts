@@ -20,7 +20,6 @@ import {extractErrorInfo} from './error-parser';
 import {getTracingServiceName} from './tracing/init-tracing';
 import {headerGetter, headerSetter} from './utils/header-utils';
 import {NodeKitLogger} from './logging';
-import {isDefined} from './utils/is-defined';
 
 type ContextParams = ContextInitialParams | ContextParentParams;
 
@@ -36,7 +35,6 @@ interface ContextInitialParams {
     loggerPostfix?: string;
     loggerExtra?: Dict;
     tags?: Dict;
-    abortSignal?: AbortSignal;
 }
 
 export interface AppTelemetrySendStats {
@@ -47,7 +45,7 @@ export interface AppTelemetrySendStats {
 interface ContextParentParams
     extends Pick<
         ContextInitialParams,
-        'parentSpanContext' | 'loggerPostfix' | 'loggerExtra' | 'tags' | 'spanKind' | 'abortSignal'
+        'parentSpanContext' | 'loggerPostfix' | 'loggerExtra' | 'tags' | 'spanKind'
     > {
     parentContext: AppContext;
 }
@@ -64,7 +62,10 @@ export class AppContext {
     utils: NodeKit['utils'];
     stats: AppTelemetrySendStats;
     dynamicConfig: AppDynamicConfig;
-    abortSignal: AbortSignal;
+
+    get abortSignal(): AbortSignal {
+        return this.abortController.signal;
+    }
 
     protected appParams: AppContextParams;
     protected name: string;
@@ -96,13 +97,10 @@ export class AppContext {
                 params.loggerExtra,
             );
 
-            this.abortSignal = AbortSignal.any(
-                [
-                    params.parentContext.abortSignal,
-                    params.abortSignal,
-                    this.abortController.signal,
-                ].filter(isDefined),
-            );
+            params.parentContext.abortSignal.addEventListener('abort', () => {
+                this.error = null;
+                return this.abortController.abort();
+            });
 
             if (this.isTracingEnabled(this.tracer)) {
                 let parrentSpanContext: Context | undefined;
@@ -151,9 +149,6 @@ export class AppContext {
             this.loggerPostfix = params.loggerPostfix || '';
             this.loggerExtra = params.loggerExtra;
             this.stats = params.stats;
-            this.abortSignal = AbortSignal.any(
-                [params.abortSignal, this.abortController.signal].filter(isDefined),
-            );
         } else {
             throw new Error(
                 'AppContext constructor requires either parent context or configuration',
@@ -165,7 +160,6 @@ export class AppContext {
             if (this.error) {
                 this.logError('context failed', this.error);
             }
-            this.abortController.abort();
             if (this.span) {
                 this.span.end();
             }
@@ -175,6 +169,10 @@ export class AppContext {
     }
 
     log(message: string, extra?: Dict) {
+        if (this.abortSignal.aborted) {
+            this.logger.warn(this.prepareLogMessage('context already ended'));
+        }
+
         const preparedExtra = this.prepareExtra(extra);
 
         this.logger.info(preparedExtra, this.prepareLogMessage(message));
@@ -182,6 +180,10 @@ export class AppContext {
     }
 
     logError(message: string, error?: AppError | Error | unknown, extra?: Dict) {
+        if (this.abortSignal.aborted) {
+            this.logger.warn(this.prepareLogMessage('context already ended'));
+        }
+
         const preparedMessage = this.prepareLogMessage(message);
         const preparedExtra = this.prepareExtra(extra);
         const logObject = this.getLogObject(error, extra);
@@ -202,6 +204,10 @@ export class AppContext {
     }
 
     logWarn(message: string, error?: AppError | Error | unknown, extra?: Dict) {
+        if (this.abortSignal.aborted) {
+            this.logger.warn(this.prepareLogMessage('context already ended'));
+        }
+
         const preparedMessage = this.prepareLogMessage(message);
         const preparedExtra = this.prepareExtra(extra);
         const logObject = this.getLogObject(error, extra);
@@ -217,6 +223,9 @@ export class AppContext {
     }
 
     create(name: string, params?: Omit<ContextParentParams, 'parentContext'>) {
+        if (this.abortSignal.aborted) {
+            throw new Error('Trying create child context from already ended context');
+        }
         return new AppContext(name, {parentContext: this, ...params});
     }
 
@@ -270,11 +279,15 @@ export class AppContext {
     }
 
     setTag(key: string, value: AttributeValue) {
+        if (this.abortSignal.aborted) {
+            this.logger.warn(this.prepareLogMessage('context already ended'));
+        }
         this.span?.setAttribute(key, value);
     }
 
     end() {
         if (this.abortSignal.aborted) {
+            this.logger.warn(this.prepareLogMessage('context already ended'));
             return;
         }
 
@@ -284,6 +297,7 @@ export class AppContext {
 
     fail(error?: AppError | Error | unknown) {
         if (this.abortSignal.aborted) {
+            this.logger.warn(this.prepareLogMessage('context already ended'));
             return;
         }
 

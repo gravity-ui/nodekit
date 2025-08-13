@@ -5,43 +5,6 @@ test('creates signal by default', () => {
     expect(nodekit.ctx.abortSignal.aborted).toBe(false);
 });
 
-test('aborts when params.abortSignal was aborted with ctx.create', () => {
-    const nodekit = new NodeKit();
-
-    const ctrl = new AbortController();
-
-    const parent = nodekit.ctx.create('parent', {abortSignal: ctrl.signal});
-
-    const ctx = parent.create('ctx');
-
-    ctrl.abort();
-
-    expect(parent.abortSignal.aborted).toBe(true);
-    expect(ctx.abortSignal.aborted).toBe(true);
-    expect(nodekit.ctx.abortSignal.aborted).toBe(false);
-});
-
-test('aborts when params.abortSignal was aborted with ctx.call', () => {
-    const nodekit = new NodeKit();
-
-    const ctrl = new AbortController();
-
-    nodekit.ctx.call(
-        'parent',
-        (parent) => {
-            parent.call('ctx', (ctx) => {
-                ctrl.abort();
-
-                expect(parent.abortSignal.aborted).toBe(true);
-                expect(ctx.abortSignal.aborted).toBe(true);
-            });
-        },
-        {abortSignal: ctrl.signal},
-    );
-
-    expect(nodekit.ctx.abortSignal.aborted).toBe(false);
-});
-
 describe('aborts when ctx.end was called', () => {
     it('parent', () => {
         const nodekit = new NodeKit();
