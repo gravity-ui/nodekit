@@ -77,7 +77,6 @@ export class AppContext {
     private loggerPostfix: string;
     private loggerExtra?: Dict;
     private abortController: AbortController;
-    private error: AppError | Error | unknown | null = null;
 
     constructor(name: string, params: ContextParams) {
         this.name = name;
@@ -98,8 +97,7 @@ export class AppContext {
             );
 
             params.parentContext.abortSignal.addEventListener('abort', () => {
-                this.error = null;
-                return this.abortController.abort();
+                this.end();
             });
 
             if (this.isTracingEnabled(this.tracer)) {
@@ -154,18 +152,6 @@ export class AppContext {
                 'AppContext constructor requires either parent context or configuration',
             );
         }
-
-        const onAbort = () => {
-            this.endTime = Date.now();
-            if (this.error) {
-                this.logError('context failed', this.error);
-            }
-            if (this.span) {
-                this.span.end();
-            }
-        };
-
-        this.abortSignal.addEventListener('abort', onAbort);
     }
 
     log(message: string, extra?: Dict) {
@@ -290,9 +276,11 @@ export class AppContext {
             this.logger.warn(this.prepareLogMessage('context already ended'));
             return;
         }
-
-        this.error = null;
         this.abortController.abort();
+        this.endTime = Date.now();
+        if (this.span) {
+            this.span.end();
+        }
     }
 
     fail(error?: AppError | Error | unknown) {
@@ -300,9 +288,12 @@ export class AppContext {
             this.logger.warn(this.prepareLogMessage('context already ended'));
             return;
         }
-
-        this.error = error ?? null;
         this.abortController.abort();
+        this.endTime = Date.now();
+        this.logError('context failed', error);
+        if (this.span) {
+            this.span.end();
+        }
     }
 
     getTime() {
