@@ -63,6 +63,10 @@ export class AppContext {
     stats: AppTelemetrySendStats;
     dynamicConfig: AppDynamicConfig;
 
+    get abortSignal(): AbortSignal {
+        return this.abortController.signal;
+    }
+
     protected appParams: AppContextParams;
     protected name: string;
     private logger: NodeKitLogger;
@@ -72,10 +76,12 @@ export class AppContext {
     private loggerPrefix: string;
     private loggerPostfix: string;
     private loggerExtra?: Dict;
+    private abortController: AbortController;
 
     constructor(name: string, params: ContextParams) {
         this.name = name;
         this.startTime = Date.now();
+        this.abortController = new AbortController();
 
         if (isContextParentParams(params)) {
             this.config = params.parentContext.config;
@@ -89,6 +95,10 @@ export class AppContext {
                 params.parentContext.loggerExtra,
                 params.loggerExtra,
             );
+
+            params.parentContext.abortSignal.addEventListener('abort', () => {
+                this.end();
+            });
 
             if (this.isTracingEnabled(this.tracer)) {
                 let parrentSpanContext: Context | undefined;
@@ -145,6 +155,10 @@ export class AppContext {
     }
 
     log(message: string, extra?: Dict) {
+        if (this.abortSignal.aborted) {
+            this.logger.warn(this.prepareLogMessage('context already ended'));
+        }
+
         const preparedExtra = this.prepareExtra(extra);
 
         this.logger.info(preparedExtra, this.prepareLogMessage(message));
@@ -152,6 +166,10 @@ export class AppContext {
     }
 
     logError(message: string, error?: AppError | Error | unknown, extra?: Dict) {
+        if (this.abortSignal.aborted) {
+            this.logger.warn(this.prepareLogMessage('context already ended'));
+        }
+
         const preparedMessage = this.prepareLogMessage(message);
         const preparedExtra = this.prepareExtra(extra);
         const logObject = this.getLogObject(error, extra);
@@ -172,6 +190,10 @@ export class AppContext {
     }
 
     logWarn(message: string, error?: AppError | Error | unknown, extra?: Dict) {
+        if (this.abortSignal.aborted) {
+            this.logger.warn(this.prepareLogMessage('context already ended'));
+        }
+
         const preparedMessage = this.prepareLogMessage(message);
         const preparedExtra = this.prepareExtra(extra);
         const logObject = this.getLogObject(error, extra);
@@ -187,6 +209,9 @@ export class AppContext {
     }
 
     create(name: string, params?: Omit<ContextParentParams, 'parentContext'>) {
+        if (this.abortSignal.aborted) {
+            throw new Error('Trying create child context from already ended context');
+        }
         return new AppContext(name, {parentContext: this, ...params});
     }
 
@@ -240,10 +265,18 @@ export class AppContext {
     }
 
     setTag(key: string, value: AttributeValue) {
+        if (this.abortSignal.aborted) {
+            this.logger.warn(this.prepareLogMessage('context already ended'));
+        }
         this.span?.setAttribute(key, value);
     }
 
     end() {
+        if (this.abortSignal.aborted) {
+            this.logger.warn(this.prepareLogMessage('context already ended'));
+            return;
+        }
+        this.abortController.abort();
         this.endTime = Date.now();
         if (this.span) {
             this.span.end();
@@ -251,6 +284,11 @@ export class AppContext {
     }
 
     fail(error?: AppError | Error | unknown) {
+        if (this.abortSignal.aborted) {
+            this.logger.warn(this.prepareLogMessage('context already ended'));
+            return;
+        }
+        this.abortController.abort();
         this.endTime = Date.now();
         this.logError('context failed', error);
         if (this.span) {
