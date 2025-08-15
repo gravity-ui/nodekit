@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.0](https://github.com/gravity-ui/nodekit/compare/v2.4.2...v2.5.0) (2025-08-15)
+
+
+### Features
+
+* **context:** add abort signals ([#88](https://github.com/gravity-ui/nodekit/issues/88)) ([2d2e439](https://github.com/gravity-ui/nodekit/commit/2d2e4398fd6f5956967d921e002ae722786f8a19))
+
 ## [2.4.2](https://github.com/gravity-ui/nodekit/compare/v2.4.1...v2.4.2) (2025-06-10)
 
 
