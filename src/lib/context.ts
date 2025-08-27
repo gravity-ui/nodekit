@@ -37,6 +37,10 @@ interface ContextInitialParams {
     tags?: Dict;
 }
 
+interface ContextProperties {
+    inheritable?: boolean;
+}
+
 export interface AppTelemetrySendStats {
     (table: string, data: {[name: string]: string | number}): void;
     (data: {[name: string]: string | number}): void;
@@ -77,18 +81,32 @@ export class AppContext {
     private loggerPostfix: string;
     private loggerExtra?: Dict;
     private abortController: AbortController;
+    private nonInheritableParamNames: Set<keyof AppContextParams>;
 
     constructor(name: string, params: ContextParams) {
         this.name = name;
         this.startTime = Date.now();
         this.abortController = new AbortController();
+        this.nonInheritableParamNames = new Set<keyof AppContextParams>();
 
         if (isContextParentParams(params)) {
             this.config = params.parentContext.config;
             this.logger = params.parentContext.logger;
             this.utils = params.parentContext.utils;
             this.dynamicConfig = params.parentContext.dynamicConfig;
-            this.appParams = Object.assign({}, params.parentContext?.appParams);
+
+            this.appParams = Object.assign(
+                {},
+                Object.fromEntries(
+                    Object.entries(params.parentContext?.appParams || {}).filter(
+                        ([key]) =>
+                            !params.parentContext.nonInheritableParamNames.has(
+                                key as keyof AppContextParams,
+                            ),
+                    ),
+                ),
+            );
+
             this.loggerPrefix = `${params.parentContext.loggerPrefix} [${this.name}]`.trim();
             this.loggerPostfix = params.loggerPostfix || params.parentContext.loggerPostfix;
             this.loggerExtra = this.mergeExtra(
@@ -256,8 +274,17 @@ export class AppContext {
         return fnResult;
     }
 
-    set<K extends keyof AppContextParams>(key: K, value: AppContextParams[K]) {
+    set<K extends keyof AppContextParams>(
+        key: K,
+        value: AppContextParams[K],
+        properties: ContextProperties = {inheritable: true},
+    ) {
         this.appParams[key] = value;
+        if (properties.inheritable) {
+            this.nonInheritableParamNames.delete(key);
+        } else {
+            this.nonInheritableParamNames.add(key);
+        }
     }
 
     get<K extends keyof AppContextParams>(key: K) {

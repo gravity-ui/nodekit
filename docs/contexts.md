@@ -199,6 +199,20 @@ ctx.log('user id is', {userId: ctx.get('userId')}); // => 123
 ctx.log('user is admin', {userAdmin: ctx.get('userAdmin')}); // => undefined
 ```
 
+### Non-inheritable context parameters
+
+You can control whether context parameters are inherited by child contexts using the `properties` parameter in the `set` method:
+
+```typescript
+// Set a parameter that won't be inherited by child contexts
+ctx.set('requestId', 'req-123', { inheritable: false });
+
+ctx.call('childFunction', (cx) => {
+  // This will be undefined since the parameter is not inheritable
+  console.log(cx.get('requestId')); // => undefined
+});
+```
+
 ## stats
 
 **This feature is not implemented yet, but it's on our roadmap. See [this issue](https://github.com/gravity-ui/nodekit/issues/1) for more information.**
