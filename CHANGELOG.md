@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.0](https://github.com/gravity-ui/nodekit/compare/v2.5.0...v2.6.0) (2025-09-05)
+
+
+### Features
+
+* **contexts:** add un-inheritable params ([#92](https://github.com/gravity-ui/nodekit/issues/92)) ([b807977](https://github.com/gravity-ui/nodekit/commit/b8079779fef1a8c512aeef9540b669e3809d95bb))
+
 ## [2.5.0](https://github.com/gravity-ui/nodekit/compare/v2.4.2...v2.5.0) (2025-08-15)
 
 
