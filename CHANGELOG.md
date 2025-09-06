@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.1](https://github.com/gravity-ui/nodekit/compare/v2.6.0...v2.6.1) (2025-09-06)
+
+
+### Bug Fixes
+
+* **context:** check ctx status in abort listener ([#94](https://github.com/gravity-ui/nodekit/issues/94)) ([69ff4ad](https://github.com/gravity-ui/nodekit/commit/69ff4ad807610938090c1fb283be08cc7aa23db9))
+
 ## [2.6.0](https://github.com/gravity-ui/nodekit/compare/v2.5.0...v2.6.0) (2025-09-05)
 
 
