@@ -115,7 +115,9 @@ export class AppContext {
             );
 
             params.parentContext.abortSignal.addEventListener('abort', () => {
-                this.end();
+                if (!this.abortSignal.aborted) {
+                    this.end();
+                }
             });
 
             if (this.isTracingEnabled(this.tracer)) {
