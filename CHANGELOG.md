@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.2](https://github.com/gravity-ui/nodekit/compare/v2.6.1...v2.6.2) (2025-09-25)
+
+
+### Bug Fixes
+
+* **context:** memory leak for abort signals ([#97](https://github.com/gravity-ui/nodekit/issues/97)) ([895194f](https://github.com/gravity-ui/nodekit/commit/895194fc28d1a66880cfac635f1077f8f454c7d4))
+
 ## [2.6.1](https://github.com/gravity-ui/nodekit/compare/v2.6.0...v2.6.1) (2025-09-06)
 
 
