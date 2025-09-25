@@ -81,6 +81,7 @@ export class AppContext {
     private loggerPostfix: string;
     private loggerExtra?: Dict;
     private abortController: AbortController;
+    private parentAbortListener?: () => void;
     private nonInheritableParamNames: Set<keyof AppContextParams>;
 
     constructor(name: string, params: ContextParams) {
@@ -114,11 +115,12 @@ export class AppContext {
                 params.loggerExtra,
             );
 
-            params.parentContext.abortSignal.addEventListener('abort', () => {
+            this.parentAbortListener = () => {
                 if (!this.abortSignal.aborted) {
                     this.end();
                 }
-            });
+            };
+            params.parentContext.abortSignal.addEventListener('abort', this.parentAbortListener);
 
             if (this.isTracingEnabled(this.tracer)) {
                 let parrentSpanContext: Context | undefined;
@@ -305,6 +307,7 @@ export class AppContext {
             this.logger.warn(this.prepareLogMessage('context already ended'));
             return;
         }
+        this.removeParentAbortListener();
         this.abortController.abort();
         this.endTime = Date.now();
         if (this.span) {
@@ -317,6 +320,7 @@ export class AppContext {
             this.logger.warn(this.prepareLogMessage('context already ended'));
             return;
         }
+        this.removeParentAbortListener();
         this.abortController.abort();
         this.endTime = Date.now();
         this.logError('context failed', error);
@@ -422,5 +426,12 @@ export class AppContext {
         });
 
         return attributes;
+    }
+
+    private removeParentAbortListener() {
+        if (this.parentContext && this.parentAbortListener) {
+            this.parentContext.abortSignal.removeEventListener('abort', this.parentAbortListener);
+            this.parentAbortListener = undefined;
+        }
     }
 }
