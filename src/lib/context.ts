@@ -359,7 +359,9 @@ export class AppContext {
 
     getTraceId(): string | undefined {
         if (!this.span) {
-            this.log('Span is undefined');
+            if (this.config.appTracingEnabled) {
+                this.log('Span is undefined');
+            }
             return undefined;
         }
         return this.span.spanContext().traceId;
