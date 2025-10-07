@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.3](https://github.com/gravity-ui/nodekit/compare/v2.6.2...v2.6.3) (2025-10-06)
+
+
+### Bug Fixes
+
+* **context:** log "Span is undefined" only when tracing is enabled ([#99](https://github.com/gravity-ui/nodekit/issues/99)) ([23a55a2](https://github.com/gravity-ui/nodekit/commit/23a55a2ca767d71c2a5c69e0f3b8bead6ef6150a))
+
 ## [2.6.2](https://github.com/gravity-ui/nodekit/compare/v2.6.1...v2.6.2) (2025-09-25)
 
 
