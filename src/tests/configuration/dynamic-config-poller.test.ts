@@ -184,3 +184,259 @@ test('check if we do not log stuff without APP_DEBUG_DYNAMIC_CONFIG flag', async
     expect(spyOnLog).not.toBeCalled();
     expect(spyOnLogError).toHaveBeenCalledTimes(ERROR_CALLS);
 });
+
+test('should include dynamic headers when dynamicHeaders are provided', async () => {
+    // ARRANGE
+    const mockGetAuthHeaderValue = jest.fn().mockResolvedValue('Bearer token123');
+    const mockGetRequestId = jest.fn().mockResolvedValue('req-123');
+    const mockAxiosGet = jest.fn().mockResolvedValue({
+        data: {gravity: 9.81},
+    });
+
+    const axiosMock = {
+        __esModule: true,
+        default: {
+            get: mockAxiosGet,
+        },
+    };
+
+    jest.doMock('axios', () => axiosMock);
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const authMockContext = createMockAppContext();
+
+    const poller = new DynamicConfigPoller(authMockContext, 'test-namespace', {
+        url: 'https://example.com/config',
+        dynamicHeaders: {
+            Authorization: mockGetAuthHeaderValue,
+            'X-Request-ID': mockGetRequestId,
+        },
+    });
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect(mockGetAuthHeaderValue).toHaveBeenCalledTimes(1);
+    expect(mockGetRequestId).toHaveBeenCalledTimes(1);
+    expect(mockAxiosGet).toHaveBeenCalledWith(
+        expect.stringContaining('https://example.com/config'),
+        {
+            headers: {
+                Authorization: 'Bearer token123',
+                'X-Request-ID': 'req-123',
+            },
+        },
+    );
+});
+
+test('should handle auth header fetch error gracefully', async () => {
+    // ARRANGE
+    const mockGetAuthHeaderValue = jest.fn().mockRejectedValue(new Error('Auth failed'));
+    const mockAxiosGet = jest.fn();
+    const mockLogError = jest.fn();
+
+    const axiosMock = {
+        __esModule: true,
+        default: {
+            get: mockAxiosGet,
+        },
+    };
+
+    jest.doMock('axios', () => axiosMock);
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const authMockContext = createMockAppContext();
+    authMockContext.logError = mockLogError;
+
+    const poller = new DynamicConfigPoller(authMockContext, 'test-namespace', {
+        url: 'https://example.com/config',
+        dynamicHeaders: {
+            Authorization: mockGetAuthHeaderValue,
+        },
+    });
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect(mockGetAuthHeaderValue).toHaveBeenCalledTimes(1);
+    expect(mockLogError).toHaveBeenCalledWith(
+        'Dynamic config: error on preparing headers',
+        expect.any(Error),
+        {namespace: 'test-namespace'},
+    );
+    expect(mockAxiosGet).not.toHaveBeenCalled();
+});
+
+test('should work without headers when no headers are provided', async () => {
+    // ARRANGE
+    const mockAxiosGet = jest.fn().mockResolvedValue({
+        data: {gravity: 9.81},
+    });
+
+    const axiosMock = {
+        __esModule: true,
+        default: {
+            get: mockAxiosGet,
+        },
+    };
+
+    jest.doMock('axios', () => axiosMock);
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const authMockContext = createMockAppContext();
+
+    const poller = new DynamicConfigPoller(authMockContext, 'test-namespace', {
+        url: 'https://example.com/config',
+    });
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect(mockAxiosGet).toHaveBeenCalledWith(
+        expect.stringContaining('https://example.com/config'),
+        {},
+    );
+});
+
+test('should include static headers when headers are provided', async () => {
+    // ARRANGE
+    const mockAxiosGet = jest.fn().mockResolvedValue({
+        data: {gravity: 9.81},
+    });
+
+    const axiosMock = {
+        __esModule: true,
+        default: {
+            get: mockAxiosGet,
+        },
+    };
+
+    jest.doMock('axios', () => axiosMock);
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const authMockContext = createMockAppContext();
+
+    const poller = new DynamicConfigPoller(authMockContext, 'test-namespace', {
+        url: 'https://example.com/config',
+        headers: {
+            'X-API-Key': 'static-key',
+            'User-Agent': 'MyApp/1.0',
+            'Content-Type': 'application/json',
+        },
+    });
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect(mockAxiosGet).toHaveBeenCalledWith(
+        expect.stringContaining('https://example.com/config'),
+        {
+            headers: {
+                'X-API-Key': 'static-key',
+                'User-Agent': 'MyApp/1.0',
+                'Content-Type': 'application/json',
+            },
+        },
+    );
+});
+
+test('should combine static and dynamic headers correctly', async () => {
+    // ARRANGE
+    const mockGetAuthHeaderValue = jest.fn().mockResolvedValue('Bearer token123');
+    const mockGetRequestId = jest.fn().mockResolvedValue('req-456');
+    const mockAxiosGet = jest.fn().mockResolvedValue({
+        data: {gravity: 9.81},
+    });
+
+    const axiosMock = {
+        __esModule: true,
+        default: {
+            get: mockAxiosGet,
+        },
+    };
+
+    jest.doMock('axios', () => axiosMock);
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const authMockContext = createMockAppContext();
+
+    const poller = new DynamicConfigPoller(authMockContext, 'test-namespace', {
+        url: 'https://example.com/config',
+        headers: {
+            'User-Agent': 'MyApp/1.0',
+            'Content-Type': 'application/json',
+        },
+        dynamicHeaders: {
+            Authorization: mockGetAuthHeaderValue,
+            'X-Request-ID': mockGetRequestId,
+        },
+    });
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect(mockGetAuthHeaderValue).toHaveBeenCalledTimes(1);
+    expect(mockGetRequestId).toHaveBeenCalledTimes(1);
+    expect(mockAxiosGet).toHaveBeenCalledWith(
+        expect.stringContaining('https://example.com/config'),
+        {
+            headers: {
+                'User-Agent': 'MyApp/1.0',
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer token123',
+                'X-Request-ID': 'req-456',
+            },
+        },
+    );
+});
+
+test('should allow dynamic headers to override static headers', async () => {
+    // ARRANGE
+    const mockGetAuthHeaderValue = jest.fn().mockResolvedValue('Bearer dynamic-token');
+    const mockAxiosGet = jest.fn().mockResolvedValue({
+        data: {gravity: 9.81},
+    });
+
+    const axiosMock = {
+        __esModule: true,
+        default: {
+            get: mockAxiosGet,
+        },
+    };
+
+    jest.doMock('axios', () => axiosMock);
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const authMockContext = createMockAppContext();
+
+    const poller = new DynamicConfigPoller(authMockContext, 'test-namespace', {
+        url: 'https://example.com/config',
+        headers: {
+            Authorization: 'Bearer static-token',
+            'User-Agent': 'MyApp/1.0',
+        },
+        dynamicHeaders: {
+            Authorization: mockGetAuthHeaderValue,
+        },
+    });
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect(mockGetAuthHeaderValue).toHaveBeenCalledTimes(1);
+    expect(mockAxiosGet).toHaveBeenCalledWith(
+        expect.stringContaining('https://example.com/config'),
+        {
+            headers: {
+                Authorization: 'Bearer dynamic-token',
+                'User-Agent': 'MyApp/1.0',
+            },
+        },
+    );
+});
