@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.7.0](https://github.com/gravity-ui/nodekit/compare/v2.6.3...v2.7.0) (2025-10-10)
+
+
+### Features
+
+* enhance DynamicConfigPoller with flexible header support ([#101](https://github.com/gravity-ui/nodekit/issues/101)) ([116995c](https://github.com/gravity-ui/nodekit/commit/116995c6e38b96299f9cefa920c7295bb6f95d9d))
+
+
+### Bug Fixes
+
+* **context:** correctly log call fails and warnings ([#102](https://github.com/gravity-ui/nodekit/issues/102)) ([1f5bf22](https://github.com/gravity-ui/nodekit/commit/1f5bf2268739e3cfdc4fef6423607553cbd7dedf))
+
 ## [2.6.3](https://github.com/gravity-ui/nodekit/compare/v2.6.2...v2.6.3) (2025-10-06)
 
 
