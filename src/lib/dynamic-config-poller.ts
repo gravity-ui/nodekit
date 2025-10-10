@@ -1,4 +1,4 @@
-import axios, {AxiosError} from 'axios';
+import axios, {AxiosError, AxiosRequestConfig} from 'axios';
 
 import type {AppContext} from './context';
 
@@ -7,6 +7,10 @@ const DYNAMIC_CONFIG_POLL_INTERVAL = 30000;
 export interface DynamicConfigSetup {
     url: string;
     interval?: number;
+    /** static headers */
+    headers?: Record<string, string>;
+    /** dynamic headers */
+    dynamicHeaders?: Record<string, () => Promise<string>>;
 }
 
 export class DynamicConfigPoller {
@@ -21,7 +25,7 @@ export class DynamicConfigPoller {
         this.dynamicConfigSetup = dynamicConfigSetup;
     }
 
-    startPolling = () => {
+    startPolling = async () => {
         const {dynamicConfigSetup, namespace} = this;
 
         if (process.env.APP_DEBUG_DYNAMIC_CONFIG) {
@@ -30,8 +34,35 @@ export class DynamicConfigPoller {
             });
         }
 
-        axios
-            .get(`${dynamicConfigSetup.url}?cacheInvalidation=${Date.now()}`)
+        const requestConfig: AxiosRequestConfig = {};
+
+        try {
+            const headers: Record<string, string> = {};
+
+            // static headers
+            if (dynamicConfigSetup.headers) {
+                Object.assign(headers, dynamicConfigSetup.headers);
+            }
+
+            // dynamic headers
+            if (dynamicConfigSetup.dynamicHeaders) {
+                for (const [key, getValue] of Object.entries(dynamicConfigSetup.dynamicHeaders)) {
+                    headers[key] = await getValue();
+                }
+            }
+
+            if (Object.keys(headers).length > 0) {
+                requestConfig.headers = headers;
+            }
+        } catch (error) {
+            this.ctx.logError('Dynamic config: error on preparing headers', error, {
+                namespace,
+            });
+            return setTimeout(this.startPolling, this.getPollTimeout());
+        }
+
+        return axios
+            .get(`${dynamicConfigSetup.url}?cacheInvalidation=${Date.now()}`, requestConfig)
             .then(this.onSuccess, this.onError);
     };
 
