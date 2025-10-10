@@ -28,7 +28,7 @@ export class PinoLogger implements NodeKitLogger {
     info(extra: Dict | undefined, message: string): void;
     info(msgOrExtra: string | Dict | undefined, message?: string): void {
         if (typeof msgOrExtra === 'string') {
-            this.logger.info(message);
+            this.logger.info(msgOrExtra);
         } else {
             this.logger.info(msgOrExtra, message);
         }
@@ -38,7 +38,7 @@ export class PinoLogger implements NodeKitLogger {
     warn(extra: Dict | undefined, message: string): void;
     warn(msgOrExtra: string | Dict | undefined, message?: string): void {
         if (typeof msgOrExtra === 'string') {
-            this.logger.warn(message);
+            this.logger.warn(msgOrExtra);
         } else {
             this.logger.warn(msgOrExtra, message);
         }
@@ -48,7 +48,7 @@ export class PinoLogger implements NodeKitLogger {
     error(extra: Dict | undefined, message: string): void;
     error(msgOrExtra: string | Dict | undefined, message?: string): void {
         if (typeof msgOrExtra === 'string') {
-            this.logger.error(message);
+            this.logger.error(msgOrExtra);
         } else {
             this.logger.error(msgOrExtra, message);
         }
@@ -58,7 +58,7 @@ export class PinoLogger implements NodeKitLogger {
     trace(extra: Dict | undefined, message: string): void;
     trace(msgOrExtra: string | Dict | undefined, message?: string): void {
         if (typeof msgOrExtra === 'string') {
-            this.logger.trace(message);
+            this.logger.trace(msgOrExtra);
         } else {
             this.logger.trace(msgOrExtra, message);
         }
@@ -68,7 +68,7 @@ export class PinoLogger implements NodeKitLogger {
     debug(extra: Dict | undefined, message: string): void;
     debug(msgOrExtra: string | Dict | undefined, message?: string): void {
         if (typeof msgOrExtra === 'string') {
-            this.logger.debug(message);
+            this.logger.debug(msgOrExtra);
         } else {
             this.logger.debug(msgOrExtra, message);
         }
