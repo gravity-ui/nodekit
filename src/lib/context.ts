@@ -61,6 +61,7 @@ function isContextParentParams(v: ContextParams): v is ContextParentParams {
 type ContextCallbackFunction<T> = (ctx: AppContext) => T;
 
 export class AppContext {
+    name: string;
     config: AppConfig;
     parentContext?: AppContext;
     utils: NodeKit['utils'];
@@ -72,7 +73,6 @@ export class AppContext {
     }
 
     protected appParams: AppContextParams;
-    protected name: string;
     private logger: NodeKitLogger;
     private span?: Span;
     private startTime: number;
