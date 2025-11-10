@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.0](https://github.com/gravity-ui/nodekit/compare/v2.7.0...v2.8.0) (2025-11-10)
+
+
+### Features
+
+* make context name public ([#104](https://github.com/gravity-ui/nodekit/issues/104)) ([e9f3f5f](https://github.com/gravity-ui/nodekit/commit/e9f3f5f9387390786d14564fa7a766a66c6899c6))
+
 ## [2.7.0](https://github.com/gravity-ui/nodekit/compare/v2.6.3...v2.7.0) (2025-10-10)
 
 
