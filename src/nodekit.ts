@@ -147,7 +147,10 @@ export class NodeKit {
                 });
             });
 
-            Promise.allSettled(promises).then(() => process.exit(code));
+            Promise.allSettled(promises).then(() => {
+                this.ctx.end();
+                process.exit(code);
+            });
         };
 
         signals.forEach((signal) => process.on(signal, handleSignal));
