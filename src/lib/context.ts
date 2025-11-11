@@ -116,7 +116,7 @@ export class AppContext {
             );
 
             this.parentAbortListener = () => {
-                if (!this.abortSignal.aborted) {
+                if (!this.isEnded()) {
                     this.end();
                 }
             };
@@ -177,7 +177,7 @@ export class AppContext {
     }
 
     log(message: string, extra?: Dict) {
-        if (this.abortSignal.aborted) {
+        if (this.isEnded()) {
             this.logger.warn(this.prepareLogMessage('Context already ended'));
         }
 
@@ -188,7 +188,7 @@ export class AppContext {
     }
 
     logError(message: string, error?: AppError | Error | unknown, extra?: Dict) {
-        if (this.abortSignal.aborted) {
+        if (this.isEnded()) {
             this.logger.warn(this.prepareLogMessage('Trying to call logError in ended context'));
         }
 
@@ -212,7 +212,7 @@ export class AppContext {
     }
 
     logWarn(message: string, error?: AppError | Error | unknown, extra?: Dict) {
-        if (this.abortSignal.aborted) {
+        if (this.isEnded()) {
             this.logger.warn(this.prepareLogMessage('Trying to call logWarn in ended context'));
         }
 
@@ -231,7 +231,7 @@ export class AppContext {
     }
 
     create(name: string, params?: Omit<ContextParentParams, 'parentContext'>) {
-        if (this.abortSignal.aborted) {
+        if (this.isEnded()) {
             throw new Error('Trying to create child context from already ended context');
         }
         return new AppContext(name, {parentContext: this, ...params});
@@ -296,15 +296,19 @@ export class AppContext {
     }
 
     setTag(key: string, value: AttributeValue) {
-        if (this.abortSignal.aborted) {
+        if (this.isEnded()) {
             this.logger.warn(this.prepareLogMessage('Trying to call setTag in ended context'));
         }
         this.span?.setAttribute(key, value);
     }
 
+    isEnded() {
+        return this.abortSignal.aborted;
+    }
+
     end() {
-        if (this.abortSignal.aborted) {
-            this.logger.warn(this.prepareLogMessage('Trying to call setTag in ended context'));
+        if (this.isEnded()) {
+            this.logger.warn(this.prepareLogMessage('Trying to call end in ended context'));
             return;
         }
         this.removeParentAbortListener();
@@ -316,7 +320,7 @@ export class AppContext {
     }
 
     fail(error?: AppError | Error | unknown) {
-        if (this.abortSignal.aborted) {
+        if (this.isEnded()) {
             this.logger.warn(this.prepareLogMessage('Trying to call fail in ended context'));
             return;
         }
