@@ -123,12 +123,12 @@ export class AppContext {
             params.parentContext.abortSignal.addEventListener('abort', this.parentAbortListener);
 
             if (this.isTracingEnabled(this.tracer)) {
-                let parrentSpanContext: Context | undefined;
+                let parentSpanContext: Context | undefined;
 
                 if (params?.parentSpanContext) {
-                    parrentSpanContext = params?.parentSpanContext;
+                    parentSpanContext = params?.parentSpanContext;
                 } else if (params.parentContext.span) {
-                    parrentSpanContext = trace.setSpan(
+                    parentSpanContext = trace.setSpan(
                         api.context.active(),
                         params.parentContext.span,
                     );
@@ -142,7 +142,7 @@ export class AppContext {
                         ),
                         kind: params.spanKind,
                     },
-                    parrentSpanContext,
+                    parentSpanContext,
                 );
 
                 // fill traceId and spanId at logger extra data
