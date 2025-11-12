@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.9.0](https://github.com/gravity-ui/nodekit/compare/v2.8.0...v2.9.0) (2025-11-11)
+
+
+### Features
+
+* add isEnded function for context ([#106](https://github.com/gravity-ui/nodekit/issues/106)) ([630c485](https://github.com/gravity-ui/nodekit/commit/630c485ae9d3e0707a7509c3792c63b94cc6d7e9))
+* end root context on shutdown ([#107](https://github.com/gravity-ui/nodekit/issues/107)) ([2b0d9e1](https://github.com/gravity-ui/nodekit/commit/2b0d9e14f3af363825b086967ac452abb7db863b))
+
 ## [2.8.0](https://github.com/gravity-ui/nodekit/compare/v2.7.0...v2.8.0) (2025-11-10)
 
 
