@@ -13,7 +13,7 @@ import {IncomingHttpHeaders} from 'http';
 import {NodeKit} from '../nodekit';
 import {AppConfig, AppContextParams, AppDynamicConfig, Dict} from '../types';
 
-import {api, core} from '@opentelemetry/sdk-node';
+import {api, core, type tracing} from '@opentelemetry/sdk-node';
 import {AppError} from './app-error';
 import {REQUEST_ID_HEADER, REQUEST_ID_PARAM_NAME} from './consts';
 import {extractErrorInfo} from './error-parser';
@@ -35,6 +35,7 @@ interface ContextInitialParams {
     loggerPostfix?: string;
     loggerExtra?: Dict;
     tags?: Dict;
+    spanExporter?: tracing.SpanExporter;
 }
 
 interface ContextProperties {
@@ -49,7 +50,7 @@ export interface AppTelemetrySendStats {
 interface ContextParentParams
     extends Pick<
         ContextInitialParams,
-        'parentSpanContext' | 'loggerPostfix' | 'loggerExtra' | 'tags' | 'spanKind'
+        'parentSpanContext' | 'loggerPostfix' | 'loggerExtra' | 'tags' | 'spanKind' | 'spanExporter'
     > {
     parentContext: AppContext;
 }
@@ -67,6 +68,7 @@ export class AppContext {
     utils: NodeKit['utils'];
     stats: AppTelemetrySendStats;
     dynamicConfig: AppDynamicConfig;
+    spanExporter?: tracing.SpanExporter;
 
     get abortSignal(): AbortSignal {
         return this.abortController.signal;
@@ -95,6 +97,7 @@ export class AppContext {
             this.logger = params.parentContext.logger;
             this.utils = params.parentContext.utils;
             this.dynamicConfig = params.parentContext.dynamicConfig;
+            this.spanExporter = params.parentContext.spanExporter;
 
             this.appParams = Object.assign(
                 {},
@@ -169,6 +172,7 @@ export class AppContext {
             this.loggerPostfix = params.loggerPostfix || '';
             this.loggerExtra = params.loggerExtra;
             this.stats = params.stats;
+            this.spanExporter = params.spanExporter;
         } else {
             throw new Error(
                 'AppContext constructor requires either parent context or configuration',

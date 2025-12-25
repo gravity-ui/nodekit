@@ -69,5 +69,5 @@ export const initTracing = (config: AppConfig, logger: NodeKitLogger) => {
 
     sdk.start();
 
-    return sdk;
+    return {sdk, tracingSpanExporter};
 };
