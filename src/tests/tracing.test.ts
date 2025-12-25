@@ -61,4 +61,14 @@ describe('Test NodeKit Tracing', () => {
             `${traceIdMock}:${currentSpanId}:0:${traceFlagsMock}`,
         );
     });
+
+    test('span exporter exist in initial context', () => {
+        expect(nodekit.ctx.spanExporter).toBeDefined();
+    });
+
+    test('span exporter exist in created context', () => {
+        const ctx = nodekit.ctx.create('created context');
+
+        expect(ctx.spanExporter).toBeDefined();
+    });
 });

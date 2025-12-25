@@ -19,6 +19,7 @@ import prepareSensitiveQueryParamsRedacter, {
     SensitiveQueryParamsRedacter,
 } from './lib/utils/redact-sensitive-query-params';
 import {AppConfig, ShutdownHandler} from './types';
+import type {tracing} from '@opentelemetry/sdk-node';
 
 interface InitOptions {
     disableDotEnv?: boolean;
@@ -99,13 +100,15 @@ export class NodeKit {
             isTrueEnvValue,
         };
 
+        let spanExporter: tracing.SpanExporter | undefined;
         if (this.config.appTracingEnabled === true) {
-            const tracingSdk = initTracing(this.config, this.logger);
+            const {sdk, tracingSpanExporter} = initTracing(this.config, this.logger);
+            spanExporter = tracingSpanExporter;
 
             this.addShutdownHandler(
                 () =>
                     new Promise((resolve) => {
-                        tracingSdk.shutdown().then(resolve);
+                        sdk.shutdown().then(resolve);
                     }),
             );
         }
@@ -115,6 +118,7 @@ export class NodeKit {
             logger: this.logger,
             utils: this.utils,
             stats: () => {},
+            spanExporter,
         });
 
         this.ctx.stats = prepareClickhouseClient(this.ctx);
