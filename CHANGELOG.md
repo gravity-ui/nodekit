@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.10.0](https://github.com/gravity-ui/nodekit/compare/v2.9.0...v2.10.0) (2025-12-25)
+
+
+### Features
+
+* add spanExporter to AppContext ([#110](https://github.com/gravity-ui/nodekit/issues/110)) ([ee15edc](https://github.com/gravity-ui/nodekit/commit/ee15edc95ea185212d375e627cf48ecc41569104))
+
 ## [2.9.0](https://github.com/gravity-ui/nodekit/compare/v2.8.0...v2.9.0) (2025-11-11)
 
 
