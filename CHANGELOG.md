@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.10.1](https://github.com/gravity-ui/nodekit/compare/v2.10.0...v2.10.1) (2026-03-02)
+
+
+### Performance Improvements
+
+* avoid redundant work in redactSensitiveHeaders on each call ([#113](https://github.com/gravity-ui/nodekit/issues/113)) ([7a4c58b](https://github.com/gravity-ui/nodekit/commit/7a4c58b79f547e4e765a947a0ede3c8bbe79df82))
+
 ## [2.10.0](https://github.com/gravity-ui/nodekit/compare/v2.9.0...v2.10.0) (2025-12-25)
 
 
