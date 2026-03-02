@@ -10,16 +10,15 @@ export default function prepareSensitiveHeadersRedacter(
     redactSensitiveQueryParams: (input: string) => string = (input) => input,
     isDevMode = false,
 ) {
+    const headersWithSensitiveUrlsLowered = headersWithSensitiveUrls.map((name) =>
+        name.toLowerCase(),
+    );
+    const redactSensitiveKeys = prepareSensitiveKeysRedacter(sensitiveHeaders);
+
     const redactSensitiveHeaders: SensitiveHeadersRedacter = (inputHeaders = {}) => {
         if (isDevMode) {
             return inputHeaders;
         }
-
-        const headersWithSensitiveUrlsLowered = headersWithSensitiveUrls.map((name) =>
-            name.toLowerCase(),
-        );
-
-        const redactSensitiveKeys = prepareSensitiveKeysRedacter(sensitiveHeaders);
 
         const result = redactSensitiveKeys(inputHeaders) as IncomingHttpHeaders;
 
