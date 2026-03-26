@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.11.0](https://github.com/gravity-ui/nodekit/compare/v2.10.1...v2.11.0) (2026-03-26)
+
+
+### Features
+
+* support passing envFilePath to NodeKit constructor ([#116](https://github.com/gravity-ui/nodekit/issues/116)) ([#117](https://github.com/gravity-ui/nodekit/issues/117)) ([e0b4e0f](https://github.com/gravity-ui/nodekit/commit/e0b4e0f1ae820401a6feeac1495b8f4906c2c6f7))
+
 ## [2.10.1](https://github.com/gravity-ui/nodekit/compare/v2.10.0...v2.10.1) (2026-03-02)
 
 
