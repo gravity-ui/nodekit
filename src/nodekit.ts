@@ -23,6 +23,7 @@ import type {tracing} from '@opentelemetry/sdk-node';
 
 interface InitOptions {
     disableDotEnv?: boolean;
+    envFilePath?: string;
     configsPath?: string;
     config?: AppConfig;
 }
@@ -44,7 +45,7 @@ export class NodeKit {
 
     constructor(options: InitOptions = {}) {
         if (!options.disableDotEnv) {
-            dotenv.config();
+            dotenv.config(options.envFilePath ? {path: options.envFilePath} : undefined);
         }
 
         const appInstallation = process.env.APP_INSTALLATION;

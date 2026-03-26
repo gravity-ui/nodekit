@@ -117,6 +117,14 @@ To disable dotenv, pass an option to the constructor:
 const nodeKit = new NodeKit({disableDotEnv: true});
 ```
 
+You can also specify a custom path to the `.env` file:
+
+```typescript
+const nodeKit = new NodeKit({
+    envFilePath: '/custom/path/.env',
+});
+```
+
 ## Accessing configuration
 
 You can access resulting configuration via NodeKit class instance or using any context:
