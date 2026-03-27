@@ -53,7 +53,7 @@ export const initTracing = (config: AppConfig, logger: NodeKitLogger) => {
     }
 
     const sdk = new NodeSDK({
-        resource: new resources.Resource({
+        resource: resources.resourceFromAttributes({
             [ATTR_SERVICE_NAME]: getTracingServiceName(config),
             [ATTR_SERVICE_VERSION]: appVersion,
         }),
