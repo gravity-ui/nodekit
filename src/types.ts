@@ -84,6 +84,10 @@ export interface AppConfig {
      * Note: `otelScope`, `traceId` and `spanId` take precedence over any OTel
      * attributes with the same names.
      *
+     * Note: when enabled, env-based OTel Logs configuration is ignored by the SDK
+     * (OTEL_LOGS_EXPORTER, OTEL_EXPORTER_OTLP_LOGS_ENDPOINT, etc.) — explicit
+     * processors take priority over env configuration.
+     *
      * Note: must be enabled during NodeKit initialization, before any other code
      * registers an OpenTelemetry LoggerProvider — the global OTel provider can
      * only be set once per process.
