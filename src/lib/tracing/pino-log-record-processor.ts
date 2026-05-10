@@ -5,19 +5,41 @@ import type {NodeKitLogger} from '../logging';
 
 type PinoLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
 
-function severityToLevel(severity: SeverityNumber | undefined): PinoLevel {
-    if (severity === undefined) return 'info';
-    if (severity <= SeverityNumber.TRACE4) return 'trace';
-    if (severity <= SeverityNumber.DEBUG4) return 'debug';
-    if (severity <= SeverityNumber.INFO4) return 'info';
-    if (severity <= SeverityNumber.WARN4) return 'warn';
+function severityTextToLevel(severityText: string | undefined): PinoLevel | undefined {
+    const value = severityText?.toLowerCase();
+    if (!value) return undefined;
+    if (value.startsWith('trace')) return 'trace';
+    if (value.startsWith('debug')) return 'debug';
+    if (value.startsWith('info')) return 'info';
+    if (value.startsWith('warn')) return 'warn';
+    if (value.startsWith('error')) return 'error';
+    if (value.startsWith('fatal')) return 'error';
+    return undefined;
+}
+
+function severityToLevel(
+    severityNumber: SeverityNumber | undefined,
+    severityText: string | undefined,
+): PinoLevel {
+    // UNSPECIFIED (= 0) and undefined are both falsy — fall back to severityText, then 'info'
+    if (!severityNumber) {
+        return severityTextToLevel(severityText) ?? 'info';
+    }
+    if (severityNumber <= SeverityNumber.TRACE4) return 'trace';
+    if (severityNumber <= SeverityNumber.DEBUG4) return 'debug';
+    if (severityNumber <= SeverityNumber.INFO4) return 'info';
+    if (severityNumber <= SeverityNumber.WARN4) return 'warn';
     return 'error';
 }
 
 function bodyToString(body: SdkLogRecord['body']): string {
     if (body === undefined || body === null) return '';
     if (typeof body === 'string') return body;
-    if (typeof body === 'object') return JSON.stringify(body);
+    try {
+        if (typeof body === 'object') return JSON.stringify(body);
+    } catch {
+        return '[Unserializable OTel log body]';
+    }
     return String(body);
 }
 
@@ -34,13 +56,24 @@ function bodyToString(body: SdkLogRecord['body']): string {
  *  - all attributes from the original LogRecord (e.g. gen_ai.usage.input_tokens)
  *  - `otelScope` – name of the instrumentation library that produced the record
  *  - `traceId` / `spanId` – when the record was emitted inside an active span
+ *
+ * Note: `otelScope`, `traceId` and `spanId` are written after spreading
+ * logRecord.attributes, so they take precedence if the same keys appear in attributes.
+ *
+ * Note: should be enabled during NodeKit initialization, before any other code
+ * initializes an OpenTelemetry LoggerProvider.
  */
 export class PinoLogRecordProcessor {
-    constructor(private readonly logger: NodeKitLogger) {}
+    private readonly logger: NodeKitLogger;
+
+    constructor(logger: NodeKitLogger) {
+        this.logger = logger;
+    }
 
     onEmit(logRecord: SdkLogRecord): void {
-        const message = bodyToString(logRecord.body);
-        const level = severityToLevel(logRecord.severityNumber);
+        const message = bodyToString(logRecord.body) || logRecord.eventName || '';
+
+        const level = severityToLevel(logRecord.severityNumber, logRecord.severityText);
 
         const extra: Record<string, unknown> = {
             ...logRecord.attributes,

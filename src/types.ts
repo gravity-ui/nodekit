@@ -81,6 +81,13 @@ export interface AppConfig {
      * Each bridged log line contains all original OTel attributes plus
      * `otelScope`, `traceId` and `spanId` fields.
      *
+     * Note: `otelScope`, `traceId` and `spanId` take precedence over any OTel
+     * attributes with the same names.
+     *
+     * Note: must be enabled during NodeKit initialization, before any other code
+     * registers an OpenTelemetry LoggerProvider — the global OTel provider can
+     * only be set once per process.
+     *
      * @default false
      */
     appTracingLogsBridge?: boolean;
