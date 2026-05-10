@@ -8,6 +8,7 @@ import {NodeSDK, core, resources, tracing} from '@opentelemetry/sdk-node';
 import {ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION} from '@opentelemetry/semantic-conventions';
 import type {AppConfig} from '../../types';
 import {createNodekitDiagLogger} from './nodekit-diag-logger';
+import {PinoLogRecordProcessor} from './pino-log-record-processor';
 import type {NodeKitLogger} from '../logging';
 
 const textMapPropagator = new core.CompositePropagator({
@@ -31,6 +32,7 @@ export const initTracing = (config: AppConfig, logger: NodeKitLogger) => {
         appTracingSpanExporter,
         appTracingCollectorProtocol,
         appTracingDisableTLS,
+        appTracingLogsBridge,
     } = config;
 
     let tracingSpanExporter: tracing.SpanExporter;
@@ -61,6 +63,9 @@ export const initTracing = (config: AppConfig, logger: NodeKitLogger) => {
         textMapPropagator,
         sampler: appTracingSampler || new tracing.TraceIdRatioBasedSampler(1),
         instrumentations: appTracingInstrumentations,
+        ...(appTracingLogsBridge && {
+            logRecordProcessors: [new PinoLogRecordProcessor(logger)],
+        }),
     });
 
     if (appTracingDebugLogging) {
