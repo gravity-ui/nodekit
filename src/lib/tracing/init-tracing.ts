@@ -10,6 +10,7 @@ import type {AppConfig} from '../../types';
 import {createNodekitDiagLogger} from './nodekit-diag-logger';
 import {PinoLogRecordProcessor} from './pino-log-record-processor';
 import type {NodeKitLogger} from '../logging';
+import {prepareSensitiveKeysRedacter} from '../utils/redact-sensitive-keys';
 
 const textMapPropagator = new core.CompositePropagator({
     propagators: [
@@ -64,7 +65,14 @@ export const initTracing = (config: AppConfig, logger: NodeKitLogger) => {
         sampler: appTracingSampler || new tracing.TraceIdRatioBasedSampler(1),
         instrumentations: appTracingInstrumentations,
         ...(appTracingLogsBridge && {
-            logRecordProcessors: [new PinoLogRecordProcessor(logger)],
+            logRecordProcessors: [
+                new PinoLogRecordProcessor(
+                    logger,
+                    prepareSensitiveKeysRedacter(
+                        config.nkDefaultSensitiveKeys?.concat(config.appSensitiveKeys ?? []),
+                    ),
+                ),
+            ],
         }),
     });
 

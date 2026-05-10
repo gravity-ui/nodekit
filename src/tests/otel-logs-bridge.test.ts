@@ -3,6 +3,7 @@ import {LoggerProvider} from '@opentelemetry/sdk-logs';
 
 import {NodeKit, NodeKitLogger} from '..';
 import {PinoLogRecordProcessor} from '../lib/tracing/pino-log-record-processor';
+import {prepareSensitiveKeysRedacter} from '../lib/utils/redact-sensitive-keys';
 import type {Dict} from '../types';
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -33,6 +34,8 @@ function makeLogger(): {logger: NodeKitLogger; calls: LogCall[]} {
     return {logger, calls};
 }
 
+const noopRedact = prepareSensitiveKeysRedacter([]);
+
 // Build a minimal LogRecord and call processor.onEmit() directly.
 // Avoids global LoggerProvider state between tests.
 function buildAndEmit(
@@ -41,6 +44,7 @@ function buildAndEmit(
         body?: unknown;
         severityNumber?: SeverityNumber;
         severityText?: string;
+        eventName?: string;
         attributes?: AnyValueMap;
         scope?: string;
     },
@@ -51,6 +55,7 @@ function buildAndEmit(
         body: opts.body as string | undefined,
         severityNumber: opts.severityNumber,
         severityText: opts.severityText,
+        eventName: opts.eventName,
         attributes: opts.attributes,
     });
 }
@@ -60,7 +65,7 @@ function buildAndEmit(
 describe('PinoLogRecordProcessor', () => {
     test('routes INFO log record to pino info', () => {
         const {logger, calls} = makeLogger();
-        const processor = new PinoLogRecordProcessor(logger);
+        const processor = new PinoLogRecordProcessor(logger, noopRedact);
 
         buildAndEmit(processor, {body: 'hello world', severityNumber: SeverityNumber.INFO});
 
@@ -83,7 +88,7 @@ describe('PinoLogRecordProcessor', () => {
         ];
 
         const {logger, calls} = makeLogger();
-        const processor = new PinoLogRecordProcessor(logger);
+        const processor = new PinoLogRecordProcessor(logger, noopRedact);
 
         for (const [severity] of cases) {
             buildAndEmit(processor, {body: `msg-${severity}`, severityNumber: severity});
@@ -94,7 +99,7 @@ describe('PinoLogRecordProcessor', () => {
 
     test('UNSPECIFIED severity falls back to severityText', () => {
         const {logger, calls} = makeLogger();
-        const processor = new PinoLogRecordProcessor(logger);
+        const processor = new PinoLogRecordProcessor(logger, noopRedact);
 
         buildAndEmit(processor, {
             body: 'msg',
@@ -107,7 +112,7 @@ describe('PinoLogRecordProcessor', () => {
 
     test('undefined severity falls back to severityText', () => {
         const {logger, calls} = makeLogger();
-        const processor = new PinoLogRecordProcessor(logger);
+        const processor = new PinoLogRecordProcessor(logger, noopRedact);
 
         buildAndEmit(processor, {body: 'msg', severityText: 'WARN'});
 
@@ -116,7 +121,7 @@ describe('PinoLogRecordProcessor', () => {
 
     test('defaults to info when both severityNumber and severityText are absent', () => {
         const {logger, calls} = makeLogger();
-        const processor = new PinoLogRecordProcessor(logger);
+        const processor = new PinoLogRecordProcessor(logger, noopRedact);
 
         const provider = new LoggerProvider({processors: [processor]});
         provider.getLogger('test').emit({body: 'no severity'});
@@ -126,7 +131,7 @@ describe('PinoLogRecordProcessor', () => {
 
     test('includes OTel attributes in extra', () => {
         const {logger, calls} = makeLogger();
-        const processor = new PinoLogRecordProcessor(logger);
+        const processor = new PinoLogRecordProcessor(logger, noopRedact);
 
         buildAndEmit(processor, {
             body: 'openai call',
@@ -144,7 +149,7 @@ describe('PinoLogRecordProcessor', () => {
 
     test('includes otelScope with instrumentation library name', () => {
         const {logger, calls} = makeLogger();
-        const processor = new PinoLogRecordProcessor(logger);
+        const processor = new PinoLogRecordProcessor(logger, noopRedact);
 
         buildAndEmit(processor, {
             body: 'msg',
@@ -158,7 +163,7 @@ describe('PinoLogRecordProcessor', () => {
 
     test('otelScope overrides attribute with the same key', () => {
         const {logger, calls} = makeLogger();
-        const processor = new PinoLogRecordProcessor(logger);
+        const processor = new PinoLogRecordProcessor(logger, noopRedact);
 
         buildAndEmit(processor, {
             body: 'msg',
@@ -171,19 +176,48 @@ describe('PinoLogRecordProcessor', () => {
 
     test('uses eventName as message fallback when body is empty', () => {
         const {logger, calls} = makeLogger();
-        const processor = new PinoLogRecordProcessor(logger);
+        const processor = new PinoLogRecordProcessor(logger, noopRedact);
+
+        buildAndEmit(processor, {body: undefined, eventName: 'db.query'});
+
+        expect(calls[0].message).toBe('db.query');
+    });
+
+    test('redacts sensitive keys from attributes', () => {
+        const {logger, calls} = makeLogger();
+        const redact = prepareSensitiveKeysRedacter(['authorization', 'password']);
+        const processor = new PinoLogRecordProcessor(logger, redact);
+
+        buildAndEmit(processor, {
+            body: 'request',
+            attributes: {
+                authorization: 'Bearer secret-token',
+                password: 'p@ssw0rd',
+                'gen_ai.usage.input_tokens': 512,
+            },
+        });
+
+        expect(calls[0].extra).toMatchObject({
+            authorization: '[REDACTED]',
+            password: '[REDACTED]',
+            'gen_ai.usage.input_tokens': 512,
+        });
+    });
+
+    test('redacts sensitive keys from object body', () => {
+        const {logger, calls} = makeLogger();
+        const redact = prepareSensitiveKeysRedacter(['password']);
+        const processor = new PinoLogRecordProcessor(logger, redact);
 
         const provider = new LoggerProvider({processors: [processor]});
-        provider.getLogger('test').emit({body: undefined, attributes: {'event.name': 'db.query'}});
+        provider.getLogger('test').emit({body: {user: 'alice', password: 'secret'}});
 
-        // eventName is set via setEventName on the SdkLogRecord internally —
-        // here we verify empty body produces empty string (eventName path is internal)
-        expect(calls[0]).toBeDefined();
+        expect(calls[0].message).toBe('{"user":"alice","password":"[REDACTED]"}');
     });
 
     test('serializes object body to JSON string', () => {
         const {logger, calls} = makeLogger();
-        const processor = new PinoLogRecordProcessor(logger);
+        const processor = new PinoLogRecordProcessor(logger, noopRedact);
 
         const provider = new LoggerProvider({processors: [processor]});
         provider.getLogger('test').emit({body: {event: 'request', status: 200}});
@@ -193,7 +227,7 @@ describe('PinoLogRecordProcessor', () => {
 
     test('handles undefined body gracefully', () => {
         const {logger, calls} = makeLogger();
-        const processor = new PinoLogRecordProcessor(logger);
+        const processor = new PinoLogRecordProcessor(logger, noopRedact);
 
         const provider = new LoggerProvider({processors: [processor]});
         provider.getLogger('test').emit({body: undefined});
@@ -203,12 +237,16 @@ describe('PinoLogRecordProcessor', () => {
 
     test('forceFlush resolves immediately', async () => {
         const {logger} = makeLogger();
-        await expect(new PinoLogRecordProcessor(logger).forceFlush()).resolves.toBeUndefined();
+        await expect(
+            new PinoLogRecordProcessor(logger, noopRedact).forceFlush(),
+        ).resolves.toBeUndefined();
     });
 
     test('shutdown resolves immediately', async () => {
         const {logger} = makeLogger();
-        await expect(new PinoLogRecordProcessor(logger).shutdown()).resolves.toBeUndefined();
+        await expect(
+            new PinoLogRecordProcessor(logger, noopRedact).shutdown(),
+        ).resolves.toBeUndefined();
     });
 });
 

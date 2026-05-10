@@ -1,7 +1,9 @@
 import {SeverityNumber} from '@opentelemetry/api-logs';
 import type {SdkLogRecord} from '@opentelemetry/sdk-logs';
 
+import type {Dict} from '../../types';
 import type {NodeKitLogger} from '../logging';
+import type {SensitiveKeysRedacter} from '../utils/redact-sensitive-keys';
 
 type PinoLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
 
@@ -32,11 +34,13 @@ function severityToLevel(
     return 'error';
 }
 
-function bodyToString(body: SdkLogRecord['body']): string {
+function bodyToString(body: SdkLogRecord['body'], redact: SensitiveKeysRedacter): string {
     if (body === undefined || body === null) return '';
     if (typeof body === 'string') return body;
     try {
-        if (typeof body === 'object') return JSON.stringify(body);
+        if (typeof body === 'object') {
+            return JSON.stringify(redact(body as Dict));
+        }
     } catch {
         return '[Unserializable OTel log body]';
     }
@@ -57,26 +61,37 @@ function bodyToString(body: SdkLogRecord['body']): string {
  *  - `otelScope` – name of the instrumentation library that produced the record
  *  - `traceId` / `spanId` – when the record was emitted inside an active span
  *
- * Note: `otelScope`, `traceId` and `spanId` are written after spreading
- * logRecord.attributes, so they take precedence if the same keys appear in attributes.
+ * Note: `otelScope`, `traceId` and `spanId` take precedence over any OTel
+ * attributes with the same names.
  *
- * Note: should be enabled during NodeKit initialization, before any other code
- * initializes an OpenTelemetry LoggerProvider.
+ * Note: OTel attributes and object bodies are run through the same
+ * redactSensitiveKeys function as ctx.log(), so sensitive fields
+ * (e.g. authorization, password) are redacted before reaching stdout.
+ *
+ * Note: when this processor is active, env-based OTel Logs configuration
+ * (OTEL_LOGS_EXPORTER, OTEL_EXPORTER_OTLP_LOGS_ENDPOINT, etc.) is ignored
+ * by the SDK — explicit processors take priority over env configuration.
+ *
+ * Note: must be enabled during NodeKit initialization, before any other code
+ * registers an OpenTelemetry LoggerProvider — the global OTel provider can
+ * only be set once per process.
  */
 export class PinoLogRecordProcessor {
     private readonly logger: NodeKitLogger;
+    private readonly redact: SensitiveKeysRedacter;
 
-    constructor(logger: NodeKitLogger) {
+    constructor(logger: NodeKitLogger, redact: SensitiveKeysRedacter) {
         this.logger = logger;
+        this.redact = redact;
     }
 
     onEmit(logRecord: SdkLogRecord): void {
-        const message = bodyToString(logRecord.body) || logRecord.eventName || '';
+        const message = bodyToString(logRecord.body, this.redact) || logRecord.eventName || '';
 
         const level = severityToLevel(logRecord.severityNumber, logRecord.severityText);
 
         const extra: Record<string, unknown> = {
-            ...logRecord.attributes,
+            ...this.redact(logRecord.attributes as Dict),
             otelScope: logRecord.instrumentationScope.name,
         };
 
