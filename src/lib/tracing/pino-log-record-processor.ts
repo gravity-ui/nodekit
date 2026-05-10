@@ -48,33 +48,8 @@ function bodyToString(body: SdkLogRecord['body'], redact: SensitiveKeysRedacter)
 }
 
 /**
- * LogRecordProcessor that bridges OpenTelemetry Log Records into pino.
- *
- * OTel-instrumented libraries (e.g. @opentelemetry/instrumentation-openai) emit
- * log records via `logger.emit()`. Without a registered LoggerProvider those
- * records are silently dropped. This processor catches every emitted record and
- * writes it to the NodeKit pino logger so all OTel logs appear in the same
- * stdout stream as ctx.log() calls.
- *
- * Each log line includes:
- *  - all attributes from the original LogRecord (e.g. gen_ai.usage.input_tokens)
- *  - `otelScope` – name of the instrumentation library that produced the record
- *  - `traceId` / `spanId` – when the record was emitted inside an active span
- *
- * Note: `otelScope`, `traceId` and `spanId` take precedence over any OTel
- * attributes with the same names.
- *
- * Note: OTel attributes and object bodies are run through the same
- * redactSensitiveKeys function as ctx.log(), so sensitive fields
- * (e.g. authorization, password) are redacted before reaching stdout.
- *
- * Note: when this processor is active, env-based OTel Logs configuration
- * (OTEL_LOGS_EXPORTER, OTEL_EXPORTER_OTLP_LOGS_ENDPOINT, etc.) is ignored
- * by the SDK — explicit processors take priority over env configuration.
- *
- * Note: must be enabled during NodeKit initialization, before any other code
- * registers an OpenTelemetry LoggerProvider — the global OTel provider can
- * only be set once per process.
+ * Bridges OTel Log Records emitted by instrumented libraries into pino.
+ * See AppConfig.appTracingLogsBridge for full documentation.
  */
 export class PinoLogRecordProcessor {
     private readonly logger: NodeKitLogger;

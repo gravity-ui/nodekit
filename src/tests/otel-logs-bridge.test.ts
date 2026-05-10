@@ -6,8 +6,6 @@ import {PinoLogRecordProcessor} from '../lib/tracing/pino-log-record-processor';
 import {prepareSensitiveKeysRedacter} from '../lib/utils/redact-sensitive-keys';
 import type {Dict} from '../types';
 
-// ── helpers ────────────────────────────────────────────────────────────────
-
 type LogCall = {level: string; extra: Dict | undefined; message: string};
 
 function makeLogger(): {logger: NodeKitLogger; calls: LogCall[]} {
@@ -36,8 +34,7 @@ function makeLogger(): {logger: NodeKitLogger; calls: LogCall[]} {
 
 const noopRedact = prepareSensitiveKeysRedacter([]);
 
-// Build a minimal LogRecord and call processor.onEmit() directly.
-// Avoids global LoggerProvider state between tests.
+// Emits a log record through a local LoggerProvider, avoiding global OTel state.
 function buildAndEmit(
     processor: PinoLogRecordProcessor,
     opts: {
@@ -59,8 +56,6 @@ function buildAndEmit(
         attributes: opts.attributes,
     });
 }
-
-// ── PinoLogRecordProcessor unit tests ─────────────────────────────────────
 
 describe('PinoLogRecordProcessor', () => {
     test('routes INFO log record to pino info', () => {
@@ -249,8 +244,6 @@ describe('PinoLogRecordProcessor', () => {
         ).resolves.toBeUndefined();
     });
 });
-
-// ── NodeKit integration ────────────────────────────────────────────────────
 
 describe('NodeKit appTracingLogsBridge', () => {
     // OTel global LoggerProvider can only be set once per process.
