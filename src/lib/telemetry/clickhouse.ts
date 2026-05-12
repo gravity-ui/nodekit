@@ -1,16 +1,19 @@
 import https from 'https';
 import os from 'os';
 
-import axios, {AxiosError} from 'axios';
+import axios, {AxiosError, AxiosInstance} from 'axios';
 
-import {Dict, TelemetryClickhouseTableDescription} from '../../types';
+import {TelemetryClickhouseTableDescription} from '../../types';
 import type {AppContext} from '../context';
+
 import {
-    DEFAULT_BACKLOG_SIZE,
-    DEFAULT_BATCH_SIZE,
-    DEFAULT_TICK_INTERVAL,
-    prepareBatchedQueue,
-} from '../utils/batch';
+    DEFAULT_TABLE_NAME,
+    TELEMETRY_DEFAULTS,
+    TelemetryClient,
+    createNoopClient,
+    prepareManagedQueue,
+    redactAxiosError,
+} from './common';
 
 function escape(input = '') {
     return input.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -19,8 +22,6 @@ function escape(input = '') {
 interface InsertData {
     [name: string]: number | string;
 }
-
-const DEFAULT_TABLE_NAME = 'apiRequests';
 
 const DEFAULT_TABLES: Record<string, TelemetryClickhouseTableDescription> = {
     [DEFAULT_TABLE_NAME]: {
@@ -39,8 +40,12 @@ const DEFAULT_TABLES: Record<string, TelemetryClickhouseTableDescription> = {
     },
 };
 
-export function prepareClickhouseClient(ctx: Pick<AppContext, 'config' | 'log' | 'logError'>) {
-    const config = ctx.config;
+// ClickHouse adapter for telemetry. Sends events via raw HTTPS POST with SQL INSERT statements.
+// Built on top of the managed batched queue shared with other adapters.
+export function prepareClickHouseClient(
+    ctx: Pick<AppContext, 'config' | 'log' | 'logError'>,
+): TelemetryClient {
+    const {config} = ctx;
 
     const credentials = config.appTelemetryChAuth && config.appTelemetryChAuth.split(':');
     const user = credentials && credentials[0];
@@ -51,18 +56,18 @@ export function prepareClickhouseClient(ctx: Pick<AppContext, 'config' | 'log' |
     const isActive = config.appTelemetryChHost && user && password && config.appTelemetryChDatabase;
 
     if (!isActive) {
-        return () => {};
+        return createNoopClient();
     }
 
     const dbName = config.appTelemetryChDatabase;
     const tables = Object.assign({}, DEFAULT_TABLES, config.appTelemetryChTables);
 
-    const tickInterval = config.appTelemetryChSendInterval || DEFAULT_TICK_INTERVAL;
-    const batchSize = config.appTelemetryChBatchSize || DEFAULT_BATCH_SIZE;
-    const backlogSize = config.appTelemetryChBacklogSize || DEFAULT_BACKLOG_SIZE;
+    const tickInterval = config.appTelemetryChSendInterval || TELEMETRY_DEFAULTS.tickInterval;
+    const batchSize = config.appTelemetryChBatchSize || TELEMETRY_DEFAULTS.batchSize;
+    const backlogSize = config.appTelemetryChBacklogSize || TELEMETRY_DEFAULTS.backlogSize;
 
     const httpsAgent = new https.Agent({keepAlive: true});
-    const axiosInstance = axios.create({httpsAgent});
+    const axiosInstance: AxiosInstance = axios.create({httpsAgent});
 
     function prepareInsertValues(table: TelemetryClickhouseTableDescription, data: InsertData) {
         const columns = Object.keys(table);
@@ -99,15 +104,18 @@ export function prepareClickhouseClient(ctx: Pick<AppContext, 'config' | 'log' |
         return `(${values})`;
     }
 
-    function sendBatchToClickhouseTable(tableName: string) {
+    function sendBatchToClickHouseTable(tableName: string) {
         const table = tables && tables[tableName];
         if (!table) {
             throw new Error(`NodeKit Telemetry: unknown table name '${tableName}'`);
         }
         const tableColumns = Object.keys(table);
 
-        return function sendBatchToClickhouse(batch: InsertData[]) {
-            const insertValues = batch.map((line) => prepareInsertValues(table, line)).join(',');
+        return async function sendBatchToClickHouse(batch: unknown[]): Promise<void> {
+            const typedBatch = batch as InsertData[];
+            const insertValues = typedBatch
+                .map((line) => prepareInsertValues(table, line))
+                .join(',');
 
             const query = `INSERT INTO ${dbName}.${tableName} (${tableColumns.join(
                 ',',
@@ -117,63 +125,95 @@ export function prepareClickhouseClient(ctx: Pick<AppContext, 'config' | 'log' |
                 ctx.log('[debug] NodeKit Telemetry: query prepared', {query});
             }
 
-            return axiosInstance.post(`https://${config.appTelemetryChHost}:${port}`, query, {
-                params: {
-                    query: '',
-                    user,
-                    password,
-                },
-            });
+            try {
+                await axiosInstance.post(`https://${config.appTelemetryChHost}:${port}`, query, {
+                    params: {
+                        query: '',
+                        user,
+                        password,
+                    },
+                });
+            } catch (err) {
+                const axErr = err as AxiosError;
+                redactAxiosError(axErr);
+                throw axErr;
+            }
         };
     }
 
-    const queues: {[name: string]: {push: Function}} = {};
+    const queues: {[name: string]: ReturnType<typeof prepareManagedQueue>} = {};
     Object.keys(tables as object).forEach((tableName: string) => {
-        queues[tableName] = prepareBatchedQueue({
-            fn: sendBatchToClickhouseTable(tableName),
-            logError: (message: string, error?: AxiosError, extra?: Dict) => {
-                if (error?.config?.params?.password) {
-                    error.config.params.password = '[REDACTED]';
-                }
-                ctx.logError(message, error, extra);
-            },
+        queues[tableName] = prepareManagedQueue({
+            fn: sendBatchToClickHouseTable(tableName),
+            logError: (message, error, extra) => ctx.logError(message, error, extra),
             tickInterval,
             backlogSize,
             batchSize,
         });
     });
 
-    function sendStats(inputData: object): void;
-    function sendStats(inputTableName: string, inputData: object): void;
-    function sendStats(inputTableName: string | object, inputData?: object): void {
-        let tableName: string;
-        let data: object;
-        if (inputData) {
-            tableName = inputTableName as string;
-            data = inputData;
-        } else {
-            tableName = DEFAULT_TABLE_NAME;
-            data = inputTableName as object;
-        }
+    function sendStats(arg1: string | object, arg2?: object): void {
+        try {
+            let tableName: string;
+            let data: object;
+            if (arg2 === undefined) {
+                tableName = DEFAULT_TABLE_NAME;
+                data = arg1 as object;
+            } else {
+                tableName = arg1 as string;
+                data = arg2;
+            }
 
-        const dataToPush = Object.keys(DEFAULT_TABLES).includes(tableName)
-            ? {
-                  host: os.hostname(),
-                  timestamp: Date.now(),
-                  ...data,
-              }
-            : data;
+            const dataToPush = Object.keys(DEFAULT_TABLES).includes(tableName)
+                ? {
+                      host: os.hostname(),
+                      timestamp: Date.now(),
+                      ...data,
+                  }
+                : data;
 
-        if (config.appTelemetryChMirrorToLogs) {
-            ctx.log('nodekit-telemetry-stats', {tableName, data: dataToPush});
-        }
+            if (config.appTelemetryChMirrorToLogs) {
+                ctx.log('nodekit-telemetry-stats', {tableName, data: dataToPush});
+            }
 
-        if (queues[tableName]) {
-            queues[tableName].push(dataToPush);
-        } else {
-            ctx.logError(`NodeKit Telemetry: unknown table '${tableName}'`);
+            if (queues[tableName]) {
+                queues[tableName].push(dataToPush);
+            } else {
+                ctx.logError(`NodeKit Telemetry: unknown table '${tableName}'`);
+            }
+        } catch (e) {
+            try {
+                ctx.logError('NodeKit Telemetry [clickhouse]: sendStats failure', e as Error);
+            } catch (_e) {
+                // sendStats must never throw
+            }
         }
     }
 
-    return sendStats;
+    async function flush(): Promise<void> {
+        await Promise.all(Object.values(queues).map((q) => q.flush()));
+    }
+
+    async function shutdown(): Promise<void> {
+        await Promise.all(Object.values(queues).map((q) => q.shutdown()));
+    }
+
+    function getMetrics() {
+        const result = {sent: 0, failed: 0, dropped: 0, backlogSize: 0};
+        for (const q of Object.values(queues)) {
+            const m = q.getMetrics();
+            result.sent += m.sent;
+            result.failed += m.failed;
+            result.dropped += m.dropped;
+            result.backlogSize += m.backlogSize;
+        }
+        return result;
+    }
+
+    return {
+        sendStats: sendStats as TelemetryClient['sendStats'],
+        flush,
+        shutdown,
+        getMetrics,
+    };
 }

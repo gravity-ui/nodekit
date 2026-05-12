@@ -80,7 +80,43 @@ export interface AppConfig {
     appTelemetryChBatchSize?: number;
     appTelemetryChBacklogSize?: number;
     appTelemetryChMirrorToLogs?: boolean;
+
+    // Generic HTTP connector (sidecar agent, edge proxy, custom receiver, etc.)
+    appTelemetryHttpUrl?: string;
+    appTelemetryHttpHeaders?: {[name: string]: string};
+    appTelemetryHttpBatchSize?: number;
+    appTelemetryHttpSendInterval?: number;
+    appTelemetryHttpBacklogSize?: number;
+    appTelemetryHttpRequestTimeout?: number;
+    appTelemetryHttpTableHeader?: string;
+    appTelemetryHttpMirrorToLogs?: boolean;
+
+    // Kinesis API connector (AWS Kinesis, Kinesis-compatible endpoints)
+    appTelemetryKinesisEndpoint?: string;
+    appTelemetryKinesisStreamName?: string;
+    appTelemetryKinesisRegion?: string;
+    appTelemetryKinesisAuth?: TelemetryKinesisAuthConfig;
+    appTelemetryKinesisBatchSize?: number;
+    appTelemetryKinesisSendInterval?: number;
+    appTelemetryKinesisBacklogSize?: number;
+    appTelemetryKinesisMaxRecordsPerRequest?: number;
+    appTelemetryKinesisMaxRequestSizeBytes?: number;
+    appTelemetryKinesisMaxRecordSizeBytes?: number;
+    appTelemetryKinesisRequestTimeout?: number;
+    appTelemetryKinesisMirrorToLogs?: boolean;
+
+    // Logs connector (writes telemetry events into the application logger with a marker)
+    appTelemetryLogsEnabled?: boolean;
+    appTelemetryLogsSampleRate?: number;
+    appTelemetryLogsLevel?: 'trace' | 'debug' | 'info' | 'warn' | 'error';
+    appTelemetryLogsNamespace?: string;
+    appTelemetryLogsRandom?: () => number;
 }
+
+export type TelemetryKinesisAuthConfig =
+    | {type: 'iam'; token: string}
+    | {type: 'iam-provider'; getToken: () => Promise<string> | string}
+    | {type: 'sigv4'; accessKeyId: string; secretAccessKey: string; sessionToken?: string};
 
 export interface AppContextParams {
     [REQUEST_ID_PARAM_NAME]?: string;

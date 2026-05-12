@@ -5,7 +5,7 @@ import {AppContext} from './lib/context';
 import {DynamicConfigPoller, DynamicConfigSetup} from './lib/dynamic-config-poller';
 import {loadFileConfigs} from './lib/file-configs';
 import {NodeKitLogger, initLogger} from './lib/logging';
-import {prepareClickhouseClient} from './lib/telemetry/clickhouse';
+import {prepareClickHouseClient} from './lib/telemetry/clickhouse';
 import {initTracing} from './lib/tracing/init-tracing';
 import {isTrueEnvValue} from './lib/utils/is-true-env';
 import prepareSensitiveHeadersRedacter, {
@@ -122,7 +122,7 @@ export class NodeKit {
             spanExporter,
         });
 
-        this.ctx.stats = prepareClickhouseClient(this.ctx);
+        this.ctx.stats = prepareClickHouseClient(this.ctx).sendStats;
 
         this.setupShutdownSignals();
     }
