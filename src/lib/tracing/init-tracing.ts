@@ -33,7 +33,7 @@ export const initTracing = (config: AppConfig, logger: NodeKitLogger) => {
         appTracingSpanExporter,
         appTracingCollectorProtocol,
         appTracingDisableTLS,
-        appTracingLogsBridge,
+        experimentalAppTracingLogsBridge,
     } = config;
 
     let tracingSpanExporter: tracing.SpanExporter;
@@ -64,7 +64,7 @@ export const initTracing = (config: AppConfig, logger: NodeKitLogger) => {
         textMapPropagator,
         sampler: appTracingSampler || new tracing.TraceIdRatioBasedSampler(1),
         instrumentations: appTracingInstrumentations,
-        ...(appTracingLogsBridge && {
+        ...(experimentalAppTracingLogsBridge && {
             logRecordProcessors: [
                 new PinoLogRecordProcessor(
                     logger,

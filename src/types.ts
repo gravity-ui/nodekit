@@ -71,7 +71,10 @@ export interface AppConfig {
      */
     appTracingDisableTLS?: boolean | undefined;
     /**
-     * Bridge OpenTelemetry Log Records into pino.
+     * Experimental: bridge OpenTelemetry Log Records into pino.
+     *
+     * This option may be removed or changed in future versions without a
+     * backwards-compatible migration path.
      *
      * When enabled, a PinoLogRecordProcessor is registered as the global
      * OTel LoggerProvider. Log records emitted by OTel-instrumented libraries
@@ -94,7 +97,7 @@ export interface AppConfig {
      *
      * @default false
      */
-    appTracingLogsBridge?: boolean;
+    experimentalAppTracingLogsBridge?: boolean;
 
     appTelemetryChHost?: string;
     appTelemetryChPort?: string;

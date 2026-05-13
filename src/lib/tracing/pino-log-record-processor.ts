@@ -51,7 +51,7 @@ function bodyToString(body: SdkLogRecord['body'], redact: SensitiveKeysRedacter)
 
 /**
  * Bridges OTel Log Records emitted by instrumented libraries into pino.
- * See AppConfig.appTracingLogsBridge for full documentation.
+ * See AppConfig.experimentalAppTracingLogsBridge for full documentation.
  */
 export class PinoLogRecordProcessor {
     private readonly logger: NodeKitLogger;

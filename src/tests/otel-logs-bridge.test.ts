@@ -245,7 +245,7 @@ describe('PinoLogRecordProcessor', () => {
     });
 });
 
-describe('NodeKit appTracingLogsBridge', () => {
+describe('NodeKit experimentalAppTracingLogsBridge', () => {
     // OTel global LoggerProvider can only be set once per process.
     // We use a custom destination so pino writes to our mock — this must be
     // the first (and only) NodeKit that registers the global provider.
@@ -255,7 +255,7 @@ describe('NodeKit appTracingLogsBridge', () => {
         const nodekit = new NodeKit({
             config: {
                 appTracingEnabled: true,
-                appTracingLogsBridge: true,
+                experimentalAppTracingLogsBridge: true,
                 appLoggingDestination: destination,
             },
         });
@@ -289,11 +289,11 @@ describe('NodeKit appTracingLogsBridge', () => {
         });
     });
 
-    test('does not throw when appTracingLogsBridge is false', () => {
+    test('does not throw when experimentalAppTracingLogsBridge is false', () => {
         const nodekit = new NodeKit({
             config: {
                 appTracingEnabled: true,
-                appTracingLogsBridge: false,
+                experimentalAppTracingLogsBridge: false,
             },
         });
 
