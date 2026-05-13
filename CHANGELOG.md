@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.12.0](https://github.com/gravity-ui/nodekit/compare/v2.11.0...v2.12.0) (2026-05-13)
+
+
+### Features
+
+* bridge OTel Log Records into pino via appTracingLogsBridge ([#122](https://github.com/gravity-ui/nodekit/issues/122)) ([08df274](https://github.com/gravity-ui/nodekit/commit/08df274e6900ae0093c1680da8cd162f66b464b5))
+
 ## [2.11.0](https://github.com/gravity-ui/nodekit/compare/v2.10.1...v2.11.0) (2026-03-26)
 
 
