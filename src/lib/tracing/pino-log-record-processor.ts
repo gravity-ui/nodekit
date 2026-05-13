@@ -1,3 +1,5 @@
+import type {pino} from 'pino';
+
 import {SeverityNumber} from '@opentelemetry/api-logs';
 import type {SdkLogRecord} from '@opentelemetry/sdk-logs';
 
@@ -5,7 +7,7 @@ import type {Dict} from '../../types';
 import type {NodeKitLogger} from '../logging';
 import type {SensitiveKeysRedacter} from '../utils/redact-sensitive-keys';
 
-type PinoLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
+type PinoLevel = Extract<pino.Level, keyof NodeKitLogger>;
 
 function severityTextToLevel(severityText: string | undefined): PinoLevel | undefined {
     const value = severityText?.toLowerCase();
