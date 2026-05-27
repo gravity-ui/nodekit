@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.12.1](https://github.com/gravity-ui/nodekit/compare/v2.12.0...v2.12.1) (2026-05-27)
+
+
+### Bug Fixes
+
+* bump deps and modernize toolchain ([#126](https://github.com/gravity-ui/nodekit/issues/126)) ([e28c4c6](https://github.com/gravity-ui/nodekit/commit/e28c4c6cd3b5b91d6c2c2ff7b3578222babbb6ce))
+
 ## [2.12.0](https://github.com/gravity-ui/nodekit/compare/v2.11.0...v2.12.0) (2026-05-13)
 
 
