@@ -28,6 +28,26 @@ interface InitOptions {
     config?: AppConfig;
 }
 
+function prepareRedacters(config: AppConfig, appDevMode: boolean) {
+    const redactSensitiveQueryParams = prepareSensitiveQueryParamsRedacter(
+        config.nkDefaultSensitiveQueryParams?.concat(config.appSensitiveQueryParams || []),
+        appDevMode,
+    );
+
+    const redactSensitiveHeaders = prepareSensitiveHeadersRedacter(
+        config.nkDefaultSensitiveHeaders?.concat(config.appSensitiveHeaders || []),
+        config.nkDefaultHeadersWithSensitiveUrls?.concat(config.appHeadersWithSensitiveUrls || []),
+        redactSensitiveQueryParams,
+        appDevMode,
+    );
+
+    const redactSensitiveKeys = prepareSensitiveKeysRedacter(
+        config.nkDefaultSensitiveKeys?.concat(config.appSensitiveKeys || []),
+    );
+
+    return {redactSensitiveKeys, redactSensitiveHeaders, redactSensitiveQueryParams};
+}
+
 export class NodeKit {
     config: AppConfig;
     ctx: AppContext;
@@ -76,28 +96,8 @@ export class NodeKit {
             });
         }
 
-        const redactSensitiveQueryParams = prepareSensitiveQueryParamsRedacter(
-            this.config.nkDefaultSensitiveQueryParams?.concat(
-                this.config.appSensitiveQueryParams || [],
-            ),
-            appDevMode,
-        );
-
-        const redactSensitiveHeaders = prepareSensitiveHeadersRedacter(
-            this.config.nkDefaultSensitiveHeaders?.concat(this.config.appSensitiveHeaders || []),
-            this.config.nkDefaultHeadersWithSensitiveUrls?.concat(
-                this.config.appHeadersWithSensitiveUrls || [],
-            ),
-            redactSensitiveQueryParams,
-            appDevMode,
-        );
-
         this.utils = {
-            redactSensitiveKeys: prepareSensitiveKeysRedacter(
-                this.config.nkDefaultSensitiveKeys?.concat(this.config.appSensitiveKeys || []),
-            ),
-            redactSensitiveHeaders,
-            redactSensitiveQueryParams,
+            ...prepareRedacters(this.config, appDevMode),
             isTrueEnvValue,
         };
 

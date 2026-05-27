@@ -27,7 +27,6 @@ interface QueueAcc {
 
 export function prepareBatchedQueue({
     fn,
-    // eslint-disable-next-line no-console
     logError = console.error,
     tickInterval = DEFAULT_TICK_INTERVAL,
     backlogSize = DEFAULT_BACKLOG_SIZE,

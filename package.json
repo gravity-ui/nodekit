@@ -40,13 +40,13 @@
     "pino-pretty": "^11.2.2"
   },
   "devDependencies": {
-    "@gravity-ui/eslint-config": "^3.2.0",
+    "@gravity-ui/eslint-config": "^4.3.1",
     "@gravity-ui/prettier-config": "^1.1.0",
     "@gravity-ui/tsconfig": "^1.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.19.19",
     "axios": "^1.7.7",
-    "eslint": "^8.57.1",
+    "eslint": "^9.39.4",
     "husky": "^9.1.7",
     "jest": "^30.4.2",
     "prettier": "^3.3.3",
