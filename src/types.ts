@@ -1,4 +1,4 @@
-import type {pino} from 'pino';
+import type pino from 'pino';
 
 import type {NodeSDKConfiguration} from '@opentelemetry/sdk-node';
 
@@ -35,7 +35,7 @@ export interface AppConfig {
      */
     appTracingServiceName?: string;
     /**
-     * Enable debug for tracing with {@link DiagLogLevel.DEBUG}. Will be printed with pino.
+     * Enable debug for tracing with DiagLogLevel.DEBUG. Will be printed with pino.
      * @default false
      */
     appTracingDebugLogging?: boolean;
@@ -94,7 +94,6 @@ export interface AppConfig {
      * Note: must be enabled during NodeKit initialization, before any other code
      * registers an OpenTelemetry LoggerProvider — the global OTel provider can
      * only be set once per process.
-     *
      * @default false
      */
     experimentalAppTracingLogsBridge?: boolean;

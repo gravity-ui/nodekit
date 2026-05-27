@@ -1,8 +1,11 @@
 {
   "extends": "@gravity-ui/tsconfig/tsconfig",
   "compilerOptions": {
+    "rootDir": "./src",
     "outDir": "dist",
-    "declaration": true
+    "declaration": true,
+    "ignoreDeprecations": "6.0",
+    "types": ["node", "jest"]
   },
   "include": ["src/**/*.ts"],
   "excludeDirectories": ["**/node_modules", "dist"]
