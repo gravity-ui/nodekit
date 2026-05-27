@@ -181,7 +181,7 @@ test('check if we do not log stuff without APP_DEBUG_DYNAMIC_CONFIG flag', async
     // we subtract 1 because we dont't care if our poller move to startPolling again after onSuccess in this test
     await proceedWithTicksAndTimers(POLLING_CALLS + SUCCESS_CALLS + ERROR_CALLS - 1);
     //ASSERT
-    expect(spyOnLog).not.toBeCalled();
+    expect(spyOnLog).not.toHaveBeenCalled();
     expect(spyOnLogError).toHaveBeenCalledTimes(ERROR_CALLS);
 });
 
