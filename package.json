@@ -58,5 +58,10 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "overrides": {
+    "@gravity-ui/eslint-config": {
+      "typescript": "^6.0.3"
+    }
   }
 }

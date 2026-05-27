@@ -47,11 +47,10 @@ export interface AppTelemetrySendStats {
     (data: {[name: string]: string | number}): void;
 }
 
-interface ContextParentParams
-    extends Pick<
-        ContextInitialParams,
-        'parentSpanContext' | 'loggerPostfix' | 'loggerExtra' | 'tags' | 'spanKind' | 'spanExporter'
-    > {
+interface ContextParentParams extends Pick<
+    ContextInitialParams,
+    'parentSpanContext' | 'loggerPostfix' | 'loggerExtra' | 'tags' | 'spanKind' | 'spanExporter'
+> {
     parentContext: AppContext;
 }
 
