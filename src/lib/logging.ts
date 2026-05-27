@@ -101,7 +101,6 @@ export function initLogger({appName, devMode, destination, level = 'debug'}: Ini
 
     const options: pino.LoggerOptions = {
         name: appName,
-        safe: true,
         level,
         serializers: {
             error: pino.stdSerializers.err,

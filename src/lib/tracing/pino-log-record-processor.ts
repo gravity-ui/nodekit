@@ -1,4 +1,4 @@
-import type {pino} from 'pino';
+import type pino from 'pino';
 
 import {SeverityNumber} from '@opentelemetry/api-logs';
 import type {SdkLogRecord} from '@opentelemetry/sdk-logs';
