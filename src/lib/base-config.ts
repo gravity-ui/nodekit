@@ -8,6 +8,7 @@ export const NODEKIT_BASE_CONFIG: AppConfig = {
         'set-cookie',
         'password',
         'x-csrf-token',
+        'x-xsrf-token',
     ],
     nkDefaultHeadersWithSensitiveUrls: ['referer'],
     nkDefaultSensitiveQueryParams: [],
