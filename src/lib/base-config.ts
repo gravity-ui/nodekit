@@ -5,4 +5,5 @@ export const NODEKIT_BASE_CONFIG: AppConfig = {
     nkDefaultSensitiveHeaders: ['authorization', 'cookie', 'set-cookie', 'password'],
     nkDefaultHeadersWithSensitiveUrls: ['referer'],
     nkDefaultSensitiveQueryParams: [],
+    appShutdownHandlersTimeout: 20000,
 };
