@@ -107,6 +107,12 @@ export interface AppConfig {
     appTelemetryChBatchSize?: number;
     appTelemetryChBacklogSize?: number;
     appTelemetryChMirrorToLogs?: boolean;
+
+    /**
+     * Timeout for shutdown handlers in milliseconds.
+     * @default 20000
+     */
+    appShutdownHandlersTimeout?: number;
 }
 
 export interface AppContextParams {
