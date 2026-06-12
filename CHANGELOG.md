@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.13.0](https://github.com/gravity-ui/nodekit/compare/v2.12.1...v2.13.0) (2026-06-11)
+
+
+### Features
+
+* add csrf token to the list of sensitiveHeaders ([#129](https://github.com/gravity-ui/nodekit/issues/129)) ([16ef9b4](https://github.com/gravity-ui/nodekit/commit/16ef9b40d090a3adeacd868b3f9db114bca7185a))
+
 ## [2.12.1](https://github.com/gravity-ui/nodekit/compare/v2.12.0...v2.12.1) (2026-05-27)
 
 
