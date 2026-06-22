@@ -120,11 +120,6 @@ export interface AppConfig {
      * Overrides nkDefaultShutdownTimeout when specified.
      */
     appShutdownTimeout?: number;
-
-    /**
-     * @deprecated Use appShutdownTimeout or nkDefaultShutdownTimeout instead.
-     */
-    appShutdownHandlersTimeout?: number;
 }
 
 export interface AppContextParams {
