@@ -138,7 +138,7 @@ export class NodeKit {
     private setupShutdownSignals() {
         const signals = ['SIGTERM', 'SIGINT'] as const;
 
-        const timeout = this.config.appShutdownHandlersTimeout;
+        const timeout = this.config.appShutdownTimeout ?? this.config.nkDefaultShutdownTimeout;
         const isTimeoutEnabled =
             typeof timeout === 'number' && Number.isFinite(timeout) && timeout > 0;
 

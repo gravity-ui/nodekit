@@ -19,6 +19,13 @@ export interface AppConfig {
     nkDefaultHeadersWithSensitiveUrls?: string[];
     nkDefaultSensitiveQueryParams?: string[];
 
+    /**
+     * Default timeout for shutdown handlers in milliseconds.
+     * Used when appShutdownTimeout is not specified.
+     * @default 20000
+     */
+    nkDefaultShutdownTimeout?: number;
+
     appSensitiveKeys?: string[];
     appSensitiveHeaders?: string[];
     appHeadersWithSensitiveUrls?: string[];
@@ -110,7 +117,12 @@ export interface AppConfig {
 
     /**
      * Timeout for shutdown handlers in milliseconds.
-     * @default 20000
+     * Overrides nkDefaultShutdownTimeout when specified.
+     */
+    appShutdownTimeout?: number;
+
+    /**
+     * @deprecated Use appShutdownTimeout or nkDefaultShutdownTimeout instead.
      */
     appShutdownHandlersTimeout?: number;
 }
