@@ -19,6 +19,13 @@ export interface AppConfig {
     nkDefaultHeadersWithSensitiveUrls?: string[];
     nkDefaultSensitiveQueryParams?: string[];
 
+    /**
+     * Default timeout for shutdown handlers in milliseconds.
+     * Used when appShutdownTimeout is not specified.
+     * @default 20000
+     */
+    nkDefaultShutdownTimeout?: number;
+
     appSensitiveKeys?: string[];
     appSensitiveHeaders?: string[];
     appHeadersWithSensitiveUrls?: string[];
@@ -107,6 +114,12 @@ export interface AppConfig {
     appTelemetryChBatchSize?: number;
     appTelemetryChBacklogSize?: number;
     appTelemetryChMirrorToLogs?: boolean;
+
+    /**
+     * Timeout for shutdown handlers in milliseconds.
+     * Overrides nkDefaultShutdownTimeout when specified.
+     */
+    appShutdownTimeout?: number;
 }
 
 export interface AppContextParams {

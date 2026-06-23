@@ -138,6 +138,10 @@ export class NodeKit {
     private setupShutdownSignals() {
         const signals = ['SIGTERM', 'SIGINT'] as const;
 
+        const timeout = this.config.appShutdownTimeout ?? this.config.nkDefaultShutdownTimeout;
+        const isTimeoutEnabled =
+            typeof timeout === 'number' && Number.isFinite(timeout) && timeout > 0;
+
         const handleSignal: ShutdownHandler = (signal) => {
             signals.forEach((signalName) => process.off(signalName, handleSignal));
 
@@ -152,7 +156,21 @@ export class NodeKit {
                 });
             });
 
+            let timeoutId: ReturnType<typeof setTimeout> | undefined;
+            if (isTimeoutEnabled) {
+                timeoutId = setTimeout(() => {
+                    this.ctx.logError(
+                        `Shutdown handlers did not complete within ${timeout}ms, forcing exit`,
+                    );
+                    this.ctx.end();
+                    process.exit(1);
+                }, timeout);
+            }
+
             Promise.allSettled(promises).then(() => {
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                }
                 this.ctx.end();
                 process.exit(code);
             });

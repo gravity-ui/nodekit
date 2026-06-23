@@ -12,4 +12,5 @@ export const NODEKIT_BASE_CONFIG: AppConfig = {
     ],
     nkDefaultHeadersWithSensitiveUrls: ['referer'],
     nkDefaultSensitiveQueryParams: [],
+    nkDefaultShutdownTimeout: 20000,
 };
