@@ -2,7 +2,14 @@ import {AppConfig} from '../types';
 
 export const NODEKIT_BASE_CONFIG: AppConfig = {
     nkDefaultSensitiveKeys: ['authorization', 'cookie', 'set-cookie', 'password'],
-    nkDefaultSensitiveHeaders: ['authorization', 'cookie', 'set-cookie', 'password'],
+    nkDefaultSensitiveHeaders: [
+        'authorization',
+        'cookie',
+        'set-cookie',
+        'password',
+        'x-csrf-token',
+        'x-xsrf-token',
+    ],
     nkDefaultHeadersWithSensitiveUrls: ['referer'],
     nkDefaultSensitiveQueryParams: [],
     nkDefaultShutdownTimeout: 20000,
