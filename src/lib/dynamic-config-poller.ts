@@ -80,7 +80,9 @@ export class DynamicConfigPoller {
 
         let result: unknown;
         try {
-            result = dynamicConfigSetup.transform?.(response.data) ?? response.data;
+            result = dynamicConfigSetup.transform
+                ? dynamicConfigSetup.transform(response.data)
+                : response.data;
         } catch (error) {
             this.ctx.logError('Dynamic config: transform failed', error, {namespace});
             setTimeout(this.startPolling, this.getPollTimeout());
@@ -89,14 +91,12 @@ export class DynamicConfigPoller {
 
         if (process.env.APP_DEBUG_DYNAMIC_CONFIG) {
             this.ctx.log('Dynamic config: fetch complete', {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 oldDynamicConfig: (this.ctx.dynamicConfig as Record<string, unknown>)[namespace],
                 fetchedDynamicConfig: result,
                 namespace,
             });
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (this.ctx.dynamicConfig as Record<string, unknown>)[namespace] = result;
 
         setTimeout(this.startPolling, this.getPollTimeout());

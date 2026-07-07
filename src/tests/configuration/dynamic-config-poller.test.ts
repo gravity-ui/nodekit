@@ -429,6 +429,27 @@ test('should apply transform to raw response data before storing', async () => {
     });
 });
 
+test('should store null when transform returns null', async () => {
+    // ARRANGE
+    const mockAxiosGet = jest.fn().mockResolvedValue({data: {featureA: true}});
+
+    jest.doMock('axios', () => ({__esModule: true, default: {get: mockAxiosGet}}));
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const ctx = createMockAppContext();
+
+    const poller = new DynamicConfigPoller(ctx, 'test-namespace', {
+        url: 'https://example.com/config',
+        transform: () => null,
+    });
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toBeNull();
+});
+
 test('should store raw data when transform is not provided', async () => {
     // ARRANGE
     const rawData = {featureA: true, featureB: false};
