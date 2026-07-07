@@ -395,6 +395,98 @@ test('should combine static and dynamic headers correctly', async () => {
     );
 });
 
+test('should apply transform to raw response data before storing', async () => {
+    // ARRANGE
+    const mockAxiosGet = jest.fn().mockResolvedValue({
+        data: {featureA: true, featureB: false},
+    });
+
+    jest.doMock('axios', () => ({__esModule: true, default: {get: mockAxiosGet}}));
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const ctx = createMockAppContext();
+
+    const transform = jest.fn((raw: {featureA: boolean; featureB: boolean}) => ({
+        featureA: raw.featureA ?? false,
+        featureB: raw.featureB ?? false,
+        featureC: false,
+    }));
+
+    const poller = new DynamicConfigPoller(ctx, 'test-namespace', {
+        url: 'https://example.com/config',
+        transform,
+    });
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect(transform).toHaveBeenCalledWith({featureA: true, featureB: false});
+    expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toEqual({
+        featureA: true,
+        featureB: false,
+        featureC: false,
+    });
+});
+
+test('should store raw data when transform is not provided', async () => {
+    // ARRANGE
+    const rawData = {featureA: true, featureB: false};
+    const mockAxiosGet = jest.fn().mockResolvedValue({data: rawData});
+
+    jest.doMock('axios', () => ({__esModule: true, default: {get: mockAxiosGet}}));
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const ctx = createMockAppContext();
+
+    const poller = new DynamicConfigPoller(ctx, 'test-namespace', {
+        url: 'https://example.com/config',
+    });
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toEqual(rawData);
+});
+
+test('should log error and continue polling when transform throws', async () => {
+    // ARRANGE
+    const mockAxiosGet = jest.fn().mockResolvedValue({data: {featureA: true}});
+
+    jest.doMock('axios', () => ({__esModule: true, default: {get: mockAxiosGet}}));
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const ctx = createMockAppContext();
+    const mockLogError = jest.fn();
+    ctx.logError = mockLogError;
+
+    const previousValue = {featureA: false};
+    (ctx.dynamicConfig as Record<string, unknown>)['test-namespace'] = previousValue;
+
+    const poller = new DynamicConfigPoller(ctx, 'test-namespace', {
+        url: 'https://example.com/config',
+        interval: MOCK_INTERVAL,
+        transform: () => {
+            throw new Error('transform error');
+        },
+    });
+    const spyOnStartPolling = jest.spyOn(poller, 'startPolling');
+
+    // ACT
+    await poller.startPolling();
+    await proceedWithTicksAndTimers(1);
+
+    // ASSERT
+    expect(mockLogError).toHaveBeenCalledWith(
+        'Dynamic config: transform failed',
+        expect.any(Error),
+        {namespace: 'test-namespace'},
+    );
+    expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toEqual(previousValue);
+    expect(spyOnStartPolling).toHaveBeenCalled();
+});
+
 test('should allow dynamic headers to override static headers', async () => {
     // ARRANGE
     const mockGetAuthHeaderValue = jest.fn().mockResolvedValue('Bearer dynamic-token');
