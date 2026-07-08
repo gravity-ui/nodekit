@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.15.0](https://github.com/gravity-ui/nodekit/compare/v2.14.0...v2.15.0) (2026-07-08)
+
+
+### Features
+
+* transform result of DynamicConfigPoller ([#133](https://github.com/gravity-ui/nodekit/issues/133)) ([ec6c240](https://github.com/gravity-ui/nodekit/commit/ec6c240d5ad3552af234e9af42e4c2556f493033))
+
 ## [2.14.0](https://github.com/gravity-ui/nodekit/compare/v2.13.0...v2.14.0) (2026-06-23)
 
 
