@@ -11,6 +11,11 @@ export interface DynamicConfigSetup {
     headers?: Record<string, string>;
     /** dynamic headers */
     dynamicHeaders?: Record<string, () => Promise<string>>;
+    /**
+     * Transform raw response data into the stored config value.
+     * Use this to apply defaults, remap fields, or coerce types.
+     */
+    transform?: (raw: unknown) => unknown;
 }
 
 export class DynamicConfigPoller {
@@ -70,20 +75,29 @@ export class DynamicConfigPoller {
         return this.dynamicConfigSetup.interval || DYNAMIC_CONFIG_POLL_INTERVAL;
     }
 
-    private onSuccess = (response: {data: Record<string, boolean>}) => {
-        const {namespace} = this;
+    private onSuccess = (response: {data: unknown}) => {
+        const {namespace, dynamicConfigSetup} = this;
+
+        let result: unknown;
+        try {
+            result = dynamicConfigSetup.transform
+                ? dynamicConfigSetup.transform(response.data)
+                : response.data;
+        } catch (error) {
+            this.ctx.logError('Dynamic config: transform failed', error, {namespace});
+            setTimeout(this.startPolling, this.getPollTimeout());
+            return;
+        }
 
         if (process.env.APP_DEBUG_DYNAMIC_CONFIG) {
             this.ctx.log('Dynamic config: fetch complete', {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                oldDynamicConfig: (this.ctx.dynamicConfig as Record<string, any>)[namespace],
-                fetchedDynamicConfig: response.data,
+                oldDynamicConfig: (this.ctx.dynamicConfig as Record<string, unknown>)[namespace],
+                fetchedDynamicConfig: result,
                 namespace,
             });
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (this.ctx.dynamicConfig as Record<string, any>)[namespace] = response.data;
+        (this.ctx.dynamicConfig as Record<string, unknown>)[namespace] = result;
 
         setTimeout(this.startPolling, this.getPollTimeout());
     };
