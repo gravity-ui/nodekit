@@ -1,22 +1,39 @@
-import axios, {AxiosError, AxiosRequestConfig} from 'axios';
+import axios, {AxiosRequestConfig} from 'axios';
 
 import type {AppContext} from './context';
 
 const DYNAMIC_CONFIG_POLL_INTERVAL = 30000;
 
-export interface DynamicConfigSetup {
-    url: string;
+export type DynamicConfigFetcher = (ctx: AppContext) => Promise<unknown>;
+
+interface DynamicConfigBase {
     interval?: number;
-    /** static headers */
-    headers?: Record<string, string>;
-    /** dynamic headers */
-    dynamicHeaders?: Record<string, () => Promise<string>>;
     /**
      * Transform raw response data into the stored config value.
      * Use this to apply defaults, remap fields, or coerce types.
      */
     transform?: (raw: unknown) => unknown;
 }
+
+interface DynamicConfigWithUrl extends DynamicConfigBase {
+    /** Source URL fetched via the built-in HTTP GET. */
+    url: string;
+    /** Static headers. */
+    headers?: Record<string, string>;
+    /** Dynamic headers. */
+    dynamicHeaders?: Record<string, () => Promise<string>>;
+    fetch?: never;
+}
+
+interface DynamicConfigWithFetch extends DynamicConfigBase {
+    url?: never;
+    headers?: never;
+    dynamicHeaders?: never;
+    /** Custom fetcher for the raw config value. */
+    fetch: DynamicConfigFetcher;
+}
+
+export type DynamicConfigSetup = DynamicConfigWithUrl | DynamicConfigWithFetch;
 
 export class DynamicConfigPoller {
     ctx: AppContext;
@@ -37,6 +54,13 @@ export class DynamicConfigPoller {
             this.ctx.log('Dynamic config: fetching started', {
                 namespace,
             });
+        }
+
+        if (dynamicConfigSetup.fetch) {
+            return Promise.resolve(dynamicConfigSetup.fetch(this.ctx)).then(
+                (data) => this.onSuccess({data}),
+                this.onError,
+            );
         }
 
         const requestConfig: AxiosRequestConfig = {};
@@ -102,7 +126,7 @@ export class DynamicConfigPoller {
         setTimeout(this.startPolling, this.getPollTimeout());
     };
 
-    private onError = (error: AxiosError) => {
+    private onError = (error: unknown) => {
         const timeout = this.getPollTimeout();
         const {namespace} = this;
 
