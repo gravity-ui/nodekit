@@ -57,10 +57,9 @@ export class DynamicConfigPoller {
         }
 
         if (dynamicConfigSetup.fetch) {
-            return Promise.resolve(dynamicConfigSetup.fetch(this.ctx)).then(
-                (data) => this.onSuccess({data}),
-                this.onError,
-            );
+            return Promise.resolve()
+                .then(() => dynamicConfigSetup.fetch(this.ctx))
+                .then((data) => this.onSuccess({data}), this.onError);
         }
 
         const requestConfig: AxiosRequestConfig = {};
