@@ -553,3 +553,89 @@ test('should allow dynamic headers to override static headers', async () => {
         },
     );
 });
+
+test('should use custom fetch and not call axios when `fetch` is provided', async () => {
+    // ARRANGE
+    const mockAxiosGet = jest.fn();
+    jest.doMock('axios', () => ({__esModule: true, default: {get: mockAxiosGet}}));
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const ctx = createMockAppContext();
+
+    const fetcher = jest.fn().mockResolvedValue({gravity: 9.81});
+
+    const poller = new DynamicConfigPoller(ctx, 'test-namespace', {
+        fetch: fetcher,
+    });
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledWith(ctx);
+    expect(mockAxiosGet).not.toHaveBeenCalled();
+    expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toEqual({
+        gravity: 9.81,
+    });
+});
+
+test('should apply transform to the value returned by a custom `fetch`', async () => {
+    // ARRANGE
+    jest.doMock('axios', () => ({__esModule: true, default: {get: jest.fn()}}));
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const ctx = createMockAppContext();
+
+    const transform = jest.fn((raw: {featureA: boolean}) => ({
+        featureA: raw.featureA,
+        featureB: false,
+    }));
+
+    const poller = new DynamicConfigPoller(ctx, 'test-namespace', {
+        fetch: () => Promise.resolve({featureA: true}),
+        transform,
+    });
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect(transform).toHaveBeenCalledWith({featureA: true});
+    expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toEqual({
+        featureA: true,
+        featureB: false,
+    });
+});
+
+test('should keep previous value and reschedule when custom `fetch` rejects', async () => {
+    // ARRANGE
+    jest.doMock('axios', () => ({__esModule: true, default: {get: jest.fn()}}));
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const ctx = createMockAppContext();
+    const mockLogError = jest.fn();
+    ctx.logError = mockLogError;
+
+    const previousValue = {featureA: false};
+    (ctx.dynamicConfig as Record<string, unknown>)['test-namespace'] = previousValue;
+
+    const poller = new DynamicConfigPoller(ctx, 'test-namespace', {
+        interval: MOCK_INTERVAL,
+        fetch: () => Promise.reject(new Error('fetch failed')),
+    });
+    const spyOnStartPolling = jest.spyOn(poller, 'startPolling');
+
+    // ACT
+    await poller.startPolling();
+    await proceedWithTicksAndTimers(1);
+
+    // ASSERT
+    expect(mockLogError).toHaveBeenCalledWith(
+        'Dynamic config: fetch failed',
+        expect.any(Error),
+        expect.objectContaining({namespace: 'test-namespace'}),
+    );
+    expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toEqual(previousValue);
+    expect(spyOnStartPolling).toHaveBeenCalled();
+});
