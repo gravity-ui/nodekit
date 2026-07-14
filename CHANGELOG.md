@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.0](https://github.com/gravity-ui/nodekit/compare/v2.15.0...v2.16.0) (2026-07-14)
+
+
+### Features
+
+* add custom fetch to dynamic config poller ([#136](https://github.com/gravity-ui/nodekit/issues/136)) ([1e2469e](https://github.com/gravity-ui/nodekit/commit/1e2469eb3bc6f71f87fd5f48baab74c93a950262))
+
 ## [2.15.0](https://github.com/gravity-ui/nodekit/compare/v2.14.0...v2.15.0) (2026-07-08)
 
 
