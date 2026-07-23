@@ -85,3 +85,7 @@ A foundational Node.js toolkit (logging, telemetry, typed errors, config, reques
 - **Instantiating NodeKit repeatedly** — create one `NodeKit` instance per app and share its `ctx`; creating many instances fragments logging/telemetry config.
 - **Throwing plain `Error`** — use the bundled `AppError` (see `docs/app-error.md`) so error codes and telemetry are captured consistently.
 - **Skipping config initialization** — NodeKit reads configuration on construction; review `docs/configuration.md` before assuming defaults.
+
+## Documentation for AI agents
+
+Agent-readable documentation for the installed version is located in `node_modules/@gravity-ui/nodekit/dist/docs/INDEX.md`.
