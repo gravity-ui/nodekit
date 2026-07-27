@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.1](https://github.com/gravity-ui/nodekit/compare/v2.16.0...v2.16.1) (2026-07-27)
+
+
+### Bug Fixes
+
+* **deps:** align OpenTelemetry package versions ([#144](https://github.com/gravity-ui/nodekit/issues/144)) ([5069b8e](https://github.com/gravity-ui/nodekit/commit/5069b8edb8cdeb9c5956a66bdd1b727e0a9a2db6))
+
 ## [2.16.0](https://github.com/gravity-ui/nodekit/compare/v2.15.0...v2.16.0) (2026-07-14)
 
 
