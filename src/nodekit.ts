@@ -76,13 +76,27 @@ export class NodeKit {
 
         const fileConfig: AppConfig = loadFileConfigs(options.configsPath, appInstallation, appEnv);
 
+        const appName =
+            process.env.APP_NAME || options.config?.appName || fileConfig.appName || 'namelessApp';
+
+        const appVersion =
+            process.env.APP_VERSION ||
+            options.config?.appVersion ||
+            fileConfig.appVersion ||
+            'versionlessApp';
+
+        const appLoggingLevel =
+            process.env.APP_LOGGING_LEVEL ||
+            options.config?.appLoggingLevel ||
+            fileConfig.appLoggingLevel;
+
         this.config = Object.assign({}, NODEKIT_BASE_CONFIG, fileConfig, options.config || {}, {
-            appName: process.env.APP_NAME || fileConfig.appName || 'namelessApp',
-            appVersion: process.env.APP_VERSION || fileConfig.appVersion || 'versionlessApp',
+            appName,
+            appVersion,
             appInstallation,
             appEnv,
             appDevMode,
-            appLoggingLevel: process.env.APP_LOGGING_LEVEL || fileConfig.appLoggingLevel,
+            appLoggingLevel,
         });
 
         if (this.config.appLogger) {
