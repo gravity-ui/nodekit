@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.2](https://github.com/gravity-ui/nodekit/compare/v2.16.1...v2.16.2) (2026-07-30)
+
+
+### Bug Fixes
+
+* **config:** support file configs for appName, appVersion, appLogginglevel ([#146](https://github.com/gravity-ui/nodekit/issues/146)) ([7a9c08f](https://github.com/gravity-ui/nodekit/commit/7a9c08f9d8fff7dc5d24597a0ffa11a55975b7e6))
+
 ## [2.16.1](https://github.com/gravity-ui/nodekit/compare/v2.16.0...v2.16.1) (2026-07-27)
 
 
