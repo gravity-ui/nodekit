@@ -159,6 +159,8 @@ export class NodeKit {
         const handleSignal: ShutdownHandler = (signal) => {
             signals.forEach((signalName) => process.off(signalName, handleSignal));
 
+            this.ctx.log('Received shutdown signal', {signal});
+
             let code = 0;
 
             const promises = this.shutdownHandlers.map((handler) => {

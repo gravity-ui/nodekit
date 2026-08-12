@@ -18,6 +18,24 @@ describe('shutdown timeout configuration', () => {
         jest.useRealTimers();
     });
 
+    test('logs when SIGTERM is received', async () => {
+        jest.useFakeTimers();
+
+        const {logger} = setupNodeKit({appShutdownTimeout: 1000});
+
+        process.emit('SIGTERM', 'SIGTERM');
+
+        await jest.advanceTimersByTimeAsync(0);
+
+        const log = JSON.parse(logger.write.mock.calls[0]?.[0] || '{}');
+        expect(log).toMatchObject({
+            msg: 'Received shutdown signal',
+            level: 30,
+            signal: 'SIGTERM',
+        });
+        expect(exitSpy).toHaveBeenCalledWith(0);
+    });
+
     test('appShutdownTimeout takes priority over nkDefaultShutdownTimeout', () => {
         jest.useFakeTimers();
 
