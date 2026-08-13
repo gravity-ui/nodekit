@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.0](https://github.com/gravity-ui/nodekit/compare/v2.16.2...v2.17.0) (2026-08-13)
+
+
+### Features
+
+* log when SIGTERM/SIGINT is received ([#148](https://github.com/gravity-ui/nodekit/issues/148)) ([ab70c72](https://github.com/gravity-ui/nodekit/commit/ab70c72d0823e2a94ff6c278fd8ce02afca5765c))
+
 ## [2.16.2](https://github.com/gravity-ui/nodekit/compare/v2.16.1...v2.16.2) (2026-07-30)
 
 
