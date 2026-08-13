@@ -187,6 +187,7 @@ export class NodeKit {
                 if (timeoutId) {
                     clearTimeout(timeoutId);
                 }
+
                 this.ctx.log('Shutdown signal handled', {signal, code});
                 this.ctx.end();
                 process.exit(code);
