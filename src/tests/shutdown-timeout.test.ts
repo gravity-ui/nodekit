@@ -27,11 +27,19 @@ describe('shutdown timeout configuration', () => {
 
         await jest.advanceTimersByTimeAsync(0);
 
-        const log = JSON.parse(logger.write.mock.calls[0]?.[0] || '{}');
-        expect(log).toMatchObject({
+        const received = JSON.parse(logger.write.mock.calls[0]?.[0] || '{}');
+        expect(received).toMatchObject({
             msg: 'Received shutdown signal',
             level: 30,
             signal: 'SIGTERM',
+        });
+
+        const handled = JSON.parse(logger.write.mock.calls.at(-1)?.[0] || '{}');
+        expect(handled).toMatchObject({
+            msg: 'Shutdown signal handled',
+            level: 30,
+            signal: 'SIGTERM',
+            code: 0,
         });
         expect(exitSpy).toHaveBeenCalledWith(0);
     });
