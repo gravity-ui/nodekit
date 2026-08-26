@@ -77,7 +77,7 @@ export class DynamicConfigPoller {
                 .then((data) => this.onSuccess({data}), this.onError);
         }
 
-        if (dynamicConfigSetup.filePath) {
+        if (dynamicConfigSetup.filePath !== undefined) {
             return fs
                 .readFile(dynamicConfigSetup.filePath, {encoding: 'utf8'})
                 .then((data) => this.onSuccess({data}), this.onError);
