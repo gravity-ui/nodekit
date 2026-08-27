@@ -639,3 +639,112 @@ test('should keep previous value and reschedule when custom `fetch` rejects', as
     expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toEqual(previousValue);
     expect(spyOnStartPolling).toHaveBeenCalled();
 });
+
+test('should read config from file and not call axios when `filePath` is provided', async () => {
+    // ARRANGE
+    const fileContents = '{"gravity":9.81}';
+    const mockReadFile = jest.fn().mockResolvedValue(fileContents);
+    const mockAxiosGet = jest.fn();
+
+    jest.doMock('axios', () => ({__esModule: true, default: {get: mockAxiosGet}}));
+    jest.doMock('node:fs/promises', () => ({
+        __esModule: true,
+        default: {readFile: mockReadFile},
+        readFile: mockReadFile,
+    }));
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const ctx = createMockAppContext();
+
+    const poller = new DynamicConfigPoller(ctx, 'test-namespace', {
+        filePath: '/tmp/dynamic-config.json',
+    });
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect(mockReadFile).toHaveBeenCalledTimes(1);
+    expect(mockReadFile).toHaveBeenCalledWith('/tmp/dynamic-config.json', {encoding: 'utf8'});
+    expect(mockAxiosGet).not.toHaveBeenCalled();
+    expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toEqual(fileContents);
+});
+
+test('should apply transform to the value read from a file', async () => {
+    // ARRANGE
+    const fileContents = '{"featureA":true}';
+    const mockReadFile = jest.fn().mockResolvedValue(fileContents);
+
+    jest.doMock('axios', () => ({__esModule: true, default: {get: jest.fn()}}));
+    jest.doMock('node:fs/promises', () => ({
+        __esModule: true,
+        default: {readFile: mockReadFile},
+        readFile: mockReadFile,
+    }));
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const ctx = createMockAppContext();
+
+    const transform = jest.fn((raw: string) => {
+        const parsed = JSON.parse(raw) as {featureA: boolean};
+        return {
+            featureA: parsed.featureA,
+            featureB: false,
+        };
+    });
+
+    const poller = new DynamicConfigPoller(ctx, 'test-namespace', {
+        filePath: '/tmp/dynamic-config.json',
+        transform,
+    });
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect(transform).toHaveBeenCalledWith(fileContents);
+    expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toEqual({
+        featureA: true,
+        featureB: false,
+    });
+});
+
+test('should keep previous value and reschedule when file read fails', async () => {
+    // ARRANGE
+    const mockReadFile = jest.fn().mockRejectedValue(new Error('ENOENT'));
+
+    jest.doMock('axios', () => ({__esModule: true, default: {get: jest.fn()}}));
+    jest.doMock('node:fs/promises', () => ({
+        __esModule: true,
+        default: {readFile: mockReadFile},
+        readFile: mockReadFile,
+    }));
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const ctx = createMockAppContext();
+    const mockLogError = jest.fn();
+    ctx.logError = mockLogError;
+
+    const previousValue = {featureA: false};
+    (ctx.dynamicConfig as Record<string, unknown>)['test-namespace'] = previousValue;
+
+    const poller = new DynamicConfigPoller(ctx, 'test-namespace', {
+        interval: MOCK_INTERVAL,
+        filePath: '/tmp/missing-config.json',
+    });
+    const spyOnStartPolling = jest.spyOn(poller, 'startPolling');
+
+    // ACT
+    await poller.startPolling();
+    await proceedWithTicksAndTimers(1);
+
+    // ASSERT
+    expect(mockReadFile).toHaveBeenCalledWith('/tmp/missing-config.json', {encoding: 'utf8'});
+    expect(mockLogError).toHaveBeenCalledWith(
+        'Dynamic config: fetch failed',
+        expect.any(Error),
+        expect.objectContaining({namespace: 'test-namespace'}),
+    );
+    expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toEqual(previousValue);
+    expect(spyOnStartPolling).toHaveBeenCalled();
+});

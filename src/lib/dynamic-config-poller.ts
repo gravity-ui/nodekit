@@ -1,4 +1,5 @@
 import axios, {AxiosRequestConfig} from 'axios';
+import fs from 'node:fs/promises';
 
 import type {AppContext} from './context';
 
@@ -23,6 +24,7 @@ interface DynamicConfigWithUrl extends DynamicConfigBase {
     /** Dynamic headers. */
     dynamicHeaders?: Record<string, () => Promise<string>>;
     fetch?: never;
+    filePath?: never;
 }
 
 interface DynamicConfigWithFetch extends DynamicConfigBase {
@@ -31,9 +33,22 @@ interface DynamicConfigWithFetch extends DynamicConfigBase {
     dynamicHeaders?: never;
     /** Custom fetcher for the raw config value. */
     fetch: DynamicConfigFetcher;
+    filePath?: never;
 }
 
-export type DynamicConfigSetup = DynamicConfigWithUrl | DynamicConfigWithFetch;
+interface DynamicConfigWithFile extends DynamicConfigBase {
+    url?: never;
+    headers?: never;
+    dynamicHeaders?: never;
+    fetch?: never;
+    /** Path to the file to read the config from. */
+    filePath: string;
+}
+
+export type DynamicConfigSetup =
+    | DynamicConfigWithUrl
+    | DynamicConfigWithFetch
+    | DynamicConfigWithFile;
 
 export class DynamicConfigPoller {
     ctx: AppContext;
@@ -59,6 +74,12 @@ export class DynamicConfigPoller {
         if (dynamicConfigSetup.fetch) {
             return Promise.resolve()
                 .then(() => dynamicConfigSetup.fetch(this.ctx))
+                .then((data) => this.onSuccess({data}), this.onError);
+        }
+
+        if (dynamicConfigSetup.filePath !== undefined) {
+            return fs
+                .readFile(dynamicConfigSetup.filePath, {encoding: 'utf8'})
                 .then((data) => this.onSuccess({data}), this.onError);
         }
 
