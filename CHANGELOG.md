@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.18.0](https://github.com/gravity-ui/nodekit/compare/v2.17.0...v2.18.0) (2026-08-27)
+
+
+### Features
+
+* read dynamic config from file ([#150](https://github.com/gravity-ui/nodekit/issues/150)) ([8d19a3f](https://github.com/gravity-ui/nodekit/commit/8d19a3f16ab7e854b44b0fb7325ccdd30e4e98f5))
+
 ## [2.17.0](https://github.com/gravity-ui/nodekit/compare/v2.16.2...v2.17.0) (2026-08-13)
 
 
