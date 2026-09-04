@@ -4,7 +4,7 @@ import {NODEKIT_BASE_CONFIG} from './lib/base-config';
 import {AppContext} from './lib/context';
 import {DynamicConfigPoller, DynamicConfigSetup} from './lib/dynamic-config-poller';
 import {loadFileConfigs} from './lib/file-configs';
-import {NodeKitLogger, initLogger} from './lib/logging';
+import {NodeKitLogger, initLogger, withLoggingFilter} from './lib/logging';
 import {prepareClickhouseClient} from './lib/telemetry/clickhouse';
 import {initTracing} from './lib/tracing/init-tracing';
 import {isTrueEnvValue} from './lib/utils/is-true-env';
@@ -109,6 +109,7 @@ export class NodeKit {
                 level: this.config.appLoggingLevel,
             });
         }
+        this.logger = withLoggingFilter(this.logger, this.config.appLoggingFilter);
 
         this.utils = {
             ...prepareRedacters(this.config, appDevMode),

@@ -3,7 +3,7 @@ import type pino from 'pino';
 import type {NodeSDKConfiguration} from '@opentelemetry/sdk-node';
 
 import {REQUEST_ID_PARAM_NAME, USER_ID_PARAM_NAME, USER_LANGUAGE_PARAM_NAME} from './lib/consts';
-import type {LoggingLevel, NodeKitLogger} from './lib/logging';
+import type {AppLoggingFilter, LoggingLevel, NodeKitLogger} from './lib/logging';
 
 export interface AppConfig {
     appName?: string;
@@ -33,6 +33,12 @@ export interface AppConfig {
 
     appLoggingDestination?: pino.DestinationStream;
     appLoggingLevel?: LoggingLevel;
+    /**
+     * Synchronously decides whether a log record is forwarded to the logger.
+     * Returning false suppresses logger output without affecting tracing events or span status.
+     * @default undefined
+     */
+    appLoggingFilter?: AppLoggingFilter;
     appLogger?: NodeKitLogger;
 
     appTracingEnabled?: boolean;
