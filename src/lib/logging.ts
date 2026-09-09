@@ -18,6 +18,48 @@ export interface NodeKitLogger {
     debug(extra: Dict | undefined, message: string): void;
 }
 
+type NodeKitLogLevel = keyof NodeKitLogger;
+
+export type AppLoggingFilter = (
+    record: Readonly<{
+        level: NodeKitLogLevel;
+        message: string;
+        extra?: Dict;
+    }>,
+) => boolean;
+
+export function withLoggingFilter(logger: NodeKitLogger, filter?: AppLoggingFilter): NodeKitLogger {
+    if (!filter) {
+        return logger;
+    }
+
+    const wrap = (level: NodeKitLogLevel) => {
+        return (msgOrExtra: string | Dict | undefined, message?: string) => {
+            const isMessageOnly = typeof msgOrExtra === 'string';
+            const logMessage = isMessageOnly ? msgOrExtra : (message as string);
+            const extra = isMessageOnly ? undefined : msgOrExtra;
+
+            if (!filter({level, message: logMessage, extra})) {
+                return;
+            }
+
+            if (isMessageOnly) {
+                logger[level](logMessage);
+            } else {
+                logger[level](extra, logMessage);
+            }
+        };
+    };
+
+    return {
+        trace: wrap('trace'),
+        debug: wrap('debug'),
+        info: wrap('info'),
+        warn: wrap('warn'),
+        error: wrap('error'),
+    };
+}
+
 export class PinoLogger implements NodeKitLogger {
     private logger: pino.Logger;
 

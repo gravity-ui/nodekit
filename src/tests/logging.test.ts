@@ -1,4 +1,6 @@
-import {NodeKit, NodeKitLogger} from '..';
+import {SpanStatusCode} from '@opentelemetry/api';
+import {core, tracing} from '@opentelemetry/sdk-node';
+import {AppLoggingFilter, NodeKit, NodeKitLogger} from '..';
 import {Dict} from '../types';
 
 const genRandomId = (length = 16) => {
@@ -14,6 +16,57 @@ const setupNodeKit = () => {
 
     return {nodekit, logger};
 };
+
+test('filter logging without filtering tracing', async () => {
+    const logger = {write: jest.fn()};
+    let exportSpans!: (spans: tracing.ReadableSpan[]) => void;
+    const exportedSpans = new Promise<tracing.ReadableSpan[]>((resolve) => {
+        exportSpans = resolve;
+    });
+    const spanExporter: tracing.SpanExporter = {
+        export(spans, callback) {
+            exportSpans(spans);
+            callback({code: core.ExportResultCode.SUCCESS});
+        },
+        shutdown: () => Promise.resolve(),
+    };
+    const previousScheduleDelay = process.env.OTEL_BSP_SCHEDULE_DELAY;
+    process.env.OTEL_BSP_SCHEDULE_DELAY = '1';
+    let nodekit: NodeKit;
+    try {
+        nodekit = new NodeKit({
+            config: {
+                appLoggingDestination: logger,
+                appLoggingFilter: () => false,
+                appTracingEnabled: true,
+                appTracingSpanExporter: spanExporter,
+            },
+        });
+    } finally {
+        if (previousScheduleDelay === undefined) {
+            delete process.env.OTEL_BSP_SCHEDULE_DELAY;
+        } else {
+            process.env.OTEL_BSP_SCHEDULE_DELAY = previousScheduleDelay;
+        }
+    }
+    const ctx = nodekit.ctx.create('test_ctx');
+
+    ctx.logError('ignored');
+    ctx.end();
+
+    expect(logger.write).not.toHaveBeenCalled();
+    const [span] = await exportedSpans;
+    expect(span.status).toEqual({
+        code: SpanStatusCode.ERROR,
+        message: 'ignored',
+    });
+    expect(span.events).toEqual([
+        expect.objectContaining({
+            name: 'ignored',
+            attributes: expect.objectContaining({event: 'ignored'}),
+        }),
+    ]);
+});
 
 test('check base logging system', () => {
     const {nodekit, logger} = setupNodeKit();
@@ -174,6 +227,33 @@ test('check logging spanId and traceId', () => {
     });
 });
 
+test('filter logging', () => {
+    const logger = {write: jest.fn()};
+    const records: Parameters<AppLoggingFilter>[0][] = [];
+    const nodekit = new NodeKit({
+        config: {
+            appLoggingDestination: logger,
+            appLoggingFilter: (record) => {
+                records.push(record);
+                return record.message !== '[test_ctx] ignored';
+            },
+        },
+    });
+    const ctx = nodekit.ctx.create('test_ctx');
+
+    ctx.log('ignored', {foo: 'bar'});
+
+    expect(records).toEqual([{level: 'info', message: '[test_ctx] ignored', extra: {foo: 'bar'}}]);
+    expect(logger.write).not.toHaveBeenCalled();
+
+    ctx.log('visible');
+
+    expect(JSON.parse(logger.write.mock.lastCall?.pop() || '{}')).toMatchObject({
+        level: 30,
+        msg: '[test_ctx] visible',
+    });
+});
+
 test('logging with a custom logger', () => {
     const warnLog = jest.fn();
     const debugLog = jest.fn();
@@ -202,6 +282,7 @@ test('logging with a custom logger', () => {
     const nodekit = new NodeKit({
         config: {
             appLogger: customLogger,
+            appLoggingFilter: ({message}) => message !== '[test_ctx] filtered',
         },
     });
 
@@ -234,4 +315,7 @@ test('logging with a custom logger', () => {
         },
         '[test_ctx] warnLog message',
     );
+
+    ctx.log('filtered');
+    expect(infoLog).toHaveBeenCalledTimes(1);
 });

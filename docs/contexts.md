@@ -99,6 +99,23 @@ childCtx.log('Waiting for response to prepare');
 
 You can override default logs destination (stdout) with `appLoggingDestination` option which accepts [pino.Destination](https://github.com/pinojs/pino/blob/master/docs/api.md#destination). It allows to implement custom formatters for logs as well as custom transports for them. Currently, this option only works if devMode is set to false. If you have an usecase when you need this option alongside enabled dev mode, feel free to open an issue.
 
+### Filtering logs
+
+Use `appLoggingFilter` to suppress selected log records before they reach the logger or destination. The filter runs synchronously and receives the log level, structured extra data and the final message, including context prefixes and postfixes. Return `true` to keep the record or `false` to suppress it:
+
+```typescript
+const ignoredMessages = [/healthcheck$/, /request started$/];
+
+const nodeKit = new NodeKit({
+  config: {
+    appLoggingFilter: ({level, message}) =>
+      level !== 'info' || ignoredMessages.every((pattern) => !pattern.test(message)),
+  },
+});
+```
+
+The filter applies to both the default logger and `appLogger`. It only suppresses logger output: tracing events and span status are not affected.
+
 ## Distributed tracing
 
 NodeKit Contexts are integrated with [Opentelemetry tracing](https://opentelemetry.io/). If tracing is enabled in your application, each created context (except the root one) will create span alongside it. Logs are working too: they're added to spans as events.
