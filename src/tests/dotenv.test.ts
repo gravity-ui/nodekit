@@ -10,10 +10,10 @@ beforeEach(() => {
 });
 
 describe('dotenv integration', () => {
-    test('should call dotenv.config by default', () => {
+    test('should call dotenv.config quietly by default', () => {
         const nodekit = new NodeKit({config: {appTracingEnabled: false}});
         expect(mockedDotenv.config).toHaveBeenCalledTimes(1);
-        expect(mockedDotenv.config).toHaveBeenCalledWith(undefined);
+        expect(mockedDotenv.config).toHaveBeenCalledWith({quiet: true});
         expect(nodekit.config).toBeDefined();
     });
 
@@ -28,7 +28,7 @@ describe('dotenv integration', () => {
             envFilePath: '/custom/.env',
             config: {appTracingEnabled: false},
         });
-        expect(mockedDotenv.config).toHaveBeenCalledWith({path: '/custom/.env'});
+        expect(mockedDotenv.config).toHaveBeenCalledWith({quiet: true, path: '/custom/.env'});
         expect(nodekit.config).toBeDefined();
     });
 });

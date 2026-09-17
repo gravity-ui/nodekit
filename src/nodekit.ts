@@ -65,7 +65,10 @@ export class NodeKit {
 
     constructor(options: InitOptions = {}) {
         if (!options.disableDotEnv) {
-            dotenv.config(options.envFilePath ? {path: options.envFilePath} : undefined);
+            dotenv.config({
+                quiet: true,
+                ...(options.envFilePath ? {path: options.envFilePath} : {}),
+            });
         }
 
         const appInstallation = process.env.APP_INSTALLATION;
