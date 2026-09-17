@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.18.1](https://github.com/gravity-ui/nodekit/compare/v2.18.0...v2.18.1) (2026-09-17)
+
+
+### Bug Fixes
+
+* suppress dotenv startup banner by default ([#155](https://github.com/gravity-ui/nodekit/issues/155)) ([a1ec62e](https://github.com/gravity-ui/nodekit/commit/a1ec62e1e3f2f0217ce5e6e6518322e66a278267))
+
 ## [2.18.0](https://github.com/gravity-ui/nodekit/compare/v2.17.0...v2.18.0) (2026-08-27)
 
 
