@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.19.0](https://github.com/gravity-ui/nodekit/compare/v2.18.1...v2.19.0) (2026-10-12)
+
+
+### Features
+
+* support environment overrides for dynamic config ([#159](https://github.com/gravity-ui/nodekit/issues/159)) ([7c882cc](https://github.com/gravity-ui/nodekit/commit/7c882cc42f6d26c91eb5ad187955a9bd2d240bc3))
+
 ## [2.18.1](https://github.com/gravity-ui/nodekit/compare/v2.18.0...v2.18.1) (2026-09-17)
 
 
