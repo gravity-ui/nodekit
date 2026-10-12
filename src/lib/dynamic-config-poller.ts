@@ -16,8 +16,9 @@ interface DynamicConfigBase {
     transform?: (raw: unknown) => unknown;
     /**
      * Environment variable containing the final config as JSON.
-     * When set, skips loading from url/filePath/fetch and does not apply transform.
-     * Defaults to NODEKIT_DYNAMIC_CONFIG_<NAMESPACE> in uppercase.
+     * When non-empty, skips loading from url/filePath/fetch and does not apply transform.
+     * Defaults to NODEKIT_DYNAMIC_CONFIG_<NAMESPACE> in uppercase, replacing characters
+     * outside A-Z, 0-9, and _ with _. An explicit envVarName is used as-is.
      */
     envVarName?: string;
 }

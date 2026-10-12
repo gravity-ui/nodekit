@@ -153,10 +153,10 @@ export class NodeKit {
     setupDynamicConfig(namespace: string, dynamicConfigSetup: DynamicConfigSetup) {
         const envVarName =
             dynamicConfigSetup.envVarName ??
-            `${DYNAMIC_CONFIG_ENV_PREFIX}${namespace.toUpperCase()}`;
+            `${DYNAMIC_CONFIG_ENV_PREFIX}${namespace.toUpperCase().replace(/[^A-Z0-9_]/g, '_')}`;
         const envValue = process.env[envVarName];
 
-        if (envValue !== undefined) {
+        if (envValue) {
             let data: unknown;
             try {
                 data = JSON.parse(envValue);

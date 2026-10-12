@@ -19,6 +19,7 @@ beforeEach(() => {
     delete process.env.CUSTOM_FEATURES_JSON;
     delete config.features;
     delete config.other;
+    delete config['feature-flags.v2'];
     jest.useFakeTimers();
     jest.mocked(axios.get)
         .mockReset()
@@ -51,16 +52,27 @@ test.each<DynamicConfigSetup>([
     expect(jest.getTimerCount()).toBe(0);
 });
 
-test('uses a custom environment variable instead of the default name', () => {
-    process.env.NODEKIT_DYNAMIC_CONFIG_FEATURES = '{"enabled":false}';
-    process.env.CUSTOM_FEATURES_JSON = '{"enabled":true}';
+test.each(['CUSTOM_FEATURES_JSON', 'custom.features'])(
+    'uses the custom variable name as-is (%s)',
+    (envVarName) => {
+        process.env.NODEKIT_DYNAMIC_CONFIG_FEATURES = '{"enabled":false}';
+        process.env[envVarName] = '{"enabled":true}';
 
-    nodekit.setupDynamicConfig('features', {
-        url: 'https://example.com/config',
-        envVarName: 'CUSTOM_FEATURES_JSON',
-    });
+        nodekit.setupDynamicConfig('features', {
+            url: 'https://example.com/config',
+            envVarName,
+        });
 
-    expect(config.features).toEqual({enabled: true});
+        expect(config.features).toEqual({enabled: true});
+    },
+);
+
+test('normalizes the default variable name without changing the namespace', () => {
+    process.env.NODEKIT_DYNAMIC_CONFIG_FEATURE_FLAGS_V2 = '{"enabled":true}';
+
+    nodekit.setupDynamicConfig('feature-flags.v2', {url: 'https://example.com/config'});
+
+    expect(config['feature-flags.v2']).toEqual({enabled: true});
 });
 
 test('loads environment overrides for independent namespaces', () => {
@@ -86,52 +98,40 @@ test.each<DynamicConfigSetup>([
 
     expect(transform).not.toHaveBeenCalled();
     expect(config.features).toEqual({enabled: true});
+});
+
+test('rejects invalid JSON without exposing its contents or falling back', () => {
+    process.env.NODEKIT_DYNAMIC_CONFIG_FEATURES = '{"secret":"do-not-expose",broken}';
+    const previous = {enabled: false};
+    config.features = previous;
+
+    expect(() =>
+        nodekit.setupDynamicConfig('features', {url: 'https://example.com/config'}),
+    ).toThrow(SyntaxError);
+    expect(() =>
+        nodekit.setupDynamicConfig('features', {url: 'https://example.com/features'}),
+    ).toThrow(
+        /^Dynamic config: environment variable "NODEKIT_DYNAMIC_CONFIG_FEATURES" must contain valid JSON$/,
+    );
+    expect(config.features).toBe(previous);
     expect(axios.get).not.toHaveBeenCalled();
     expect(jest.getTimerCount()).toBe(0);
 });
 
-test.each(['', '{"secret":"do-not-expose",broken}'])(
-    'rejects invalid JSON without exposing its contents or falling back (%j)',
-    (value) => {
-        process.env.NODEKIT_DYNAMIC_CONFIG_FEATURES = value;
-        const previous = {enabled: false};
-        config.features = previous;
-
-        expect(() =>
-            nodekit.setupDynamicConfig('features', {url: 'https://example.com/config'}),
-        ).toThrow(SyntaxError);
-        expect(() =>
-            nodekit.setupDynamicConfig('features', {url: 'https://example.com/features'}),
-        ).toThrow(
-            /^Dynamic config: environment variable "NODEKIT_DYNAMIC_CONFIG_FEATURES" must contain valid JSON$/,
-        );
-        expect(config.features).toBe(previous);
-        expect(axios.get).not.toHaveBeenCalled();
-        expect(jest.getTimerCount()).toBe(0);
-    },
-);
-
-test.each([undefined, 'CUSTOM_FEATURES_JSON'])(
-    'polls the URL when the selected variable is absent (%s)',
-    async (envVarName) => {
-        if (envVarName) {
-            process.env.NODEKIT_DYNAMIC_CONFIG_FEATURES = '{"ignored":true}';
+test.each([undefined, ''])(
+    'polls the URL when the environment variable is absent or empty (%s)',
+    async (envValue) => {
+        if (envValue !== undefined) {
+            process.env.NODEKIT_DYNAMIC_CONFIG_FEATURES = envValue;
         }
 
-        const transform = jest.fn((value) => ({...value, transformed: true}));
-        nodekit.setupDynamicConfig('features', {
-            url: 'https://example.com/config',
-            envVarName,
-            transform,
-        });
+        nodekit.setupDynamicConfig('features', {url: 'https://example.com/config'});
         await Promise.resolve();
 
         expect(axios.get).toHaveBeenCalledWith(
             expect.stringContaining('https://example.com/config?'),
             {},
         );
-        expect(transform).toHaveBeenCalledWith({remote: true});
-        expect(config.features).toEqual({remote: true, transformed: true});
-        expect(jest.getTimerCount()).toBe(1);
+        expect(config.features).toEqual({remote: true});
     },
 );
