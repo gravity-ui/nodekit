@@ -21,6 +21,8 @@ import prepareSensitiveQueryParamsRedacter, {
 import {AppConfig, ShutdownHandler} from './types';
 import type {tracing} from '@opentelemetry/sdk-node';
 
+const DYNAMIC_CONFIG_ENV_PREFIX = 'NODEKIT_DYNAMIC_CONFIG_';
+
 interface InitOptions {
     disableDotEnv?: boolean;
     envFilePath?: string;
@@ -149,6 +151,30 @@ export class NodeKit {
     }
 
     setupDynamicConfig(namespace: string, dynamicConfigSetup: DynamicConfigSetup) {
+        const envVarName =
+            dynamicConfigSetup.envVarName ??
+            `${DYNAMIC_CONFIG_ENV_PREFIX}${namespace.toUpperCase()}`;
+        const envValue = process.env[envVarName];
+
+        if (envValue !== undefined) {
+            let data: unknown;
+            try {
+                data = JSON.parse(envValue);
+            } catch {
+                // JSON.parse errors can include the config contents, which may contain secrets.
+                throw new SyntaxError(
+                    `Dynamic config: environment variable "${envVarName}" must contain valid JSON`,
+                );
+            }
+
+            (this.ctx.dynamicConfig as Record<string, unknown>)[namespace] = data;
+
+            this.ctx.log(
+                `Dynamic config "${namespace}": loaded from environment variable "${envVarName}", skipping polling`,
+            );
+            return;
+        }
+
         new DynamicConfigPoller(this.ctx, namespace, dynamicConfigSetup).startPolling();
     }
 

@@ -14,6 +14,12 @@ interface DynamicConfigBase {
      * Use this to apply defaults, remap fields, or coerce types.
      */
     transform?: (raw: unknown) => unknown;
+    /**
+     * Environment variable containing the final config as JSON.
+     * When set, skips loading from url/filePath/fetch and does not apply transform.
+     * Defaults to NODEKIT_DYNAMIC_CONFIG_<NAMESPACE> in uppercase.
+     */
+    envVarName?: string;
 }
 
 interface DynamicConfigWithUrl extends DynamicConfigBase {
