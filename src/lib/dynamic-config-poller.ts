@@ -26,6 +26,8 @@ interface DynamicConfigBase {
 interface DynamicConfigWithUrl extends DynamicConfigBase {
     /** Source URL fetched via the built-in HTTP GET. */
     url: string;
+    /** Tried in order when `url` does not respond with HTTP success. */
+    fallbackUrls?: string[];
     /** Static headers. */
     headers?: Record<string, string>;
     /** Dynamic headers. */
@@ -36,6 +38,7 @@ interface DynamicConfigWithUrl extends DynamicConfigBase {
 
 interface DynamicConfigWithFetch extends DynamicConfigBase {
     url?: never;
+    fallbackUrls?: never;
     headers?: never;
     dynamicHeaders?: never;
     /** Custom fetcher for the raw config value. */
@@ -45,6 +48,7 @@ interface DynamicConfigWithFetch extends DynamicConfigBase {
 
 interface DynamicConfigWithFile extends DynamicConfigBase {
     url?: never;
+    fallbackUrls?: never;
     headers?: never;
     dynamicHeaders?: never;
     fetch?: never;
@@ -117,9 +121,23 @@ export class DynamicConfigPoller {
             return setTimeout(this.startPolling, this.getPollTimeout());
         }
 
-        return axios
-            .get(`${dynamicConfigSetup.url}?cacheInvalidation=${Date.now()}`, requestConfig)
-            .then(this.onSuccess, this.onError);
+        const urls = [dynamicConfigSetup.url, ...(dynamicConfigSetup.fallbackUrls ?? [])];
+
+        const fetchFrom = (index: number): Promise<unknown> =>
+            axios
+                .get(`${urls[index]}?cacheInvalidation=${Date.now()}`, requestConfig)
+                .then(this.onSuccess, (error: unknown) => {
+                    if (index + 1 >= urls.length) {
+                        return this.onError(error);
+                    }
+                    this.ctx.logError('Dynamic config: url failed, trying next', error, {
+                        namespace,
+                        url: urls[index],
+                    });
+                    return fetchFrom(index + 1);
+                });
+
+        return fetchFrom(0);
     };
 
     private getPollTimeout() {

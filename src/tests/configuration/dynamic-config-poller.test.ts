@@ -748,3 +748,40 @@ test('should keep previous value and reschedule when file read fails', async () 
     expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toEqual(previousValue);
     expect(spyOnStartPolling).toHaveBeenCalled();
 });
+
+test('should try the next url when the previous one fails', async () => {
+    // ARRANGE
+    const mockAxiosGet = jest
+        .fn()
+        .mockRejectedValueOnce(new Error('primary down'))
+        .mockResolvedValueOnce({data: {gravity: 9.81}});
+
+    jest.doMock('axios', () => ({__esModule: true, default: {get: mockAxiosGet}}));
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const ctx = createMockAppContext();
+    const mockLogError = jest.fn();
+    ctx.logError = mockLogError;
+
+    const poller = new DynamicConfigPoller(ctx, 'test-namespace', {
+        url: 'https://primary.example.com/config',
+        fallbackUrls: ['https://fallback.example.com/config'],
+    });
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect(mockAxiosGet).toHaveBeenCalledTimes(2);
+    expect(mockAxiosGet.mock.calls[0][0]).toContain('https://primary.example.com/config');
+    expect(mockAxiosGet.mock.calls[1][0]).toContain('https://fallback.example.com/config');
+    expect(mockLogError).toHaveBeenCalledTimes(1);
+    expect(mockLogError).toHaveBeenCalledWith(
+        'Dynamic config: url failed, trying next',
+        expect.any(Error),
+        {namespace: 'test-namespace', url: 'https://primary.example.com/config'},
+    );
+    expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toEqual({
+        gravity: 9.81,
+    });
+});
