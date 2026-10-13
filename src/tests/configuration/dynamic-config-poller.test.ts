@@ -72,6 +72,7 @@ const createMockAppContext = () => {
     }) as jest.Mocked<AppContext>;
     mockCtx.log = jest.fn().mockImplementation(logNothing);
     mockCtx.logError = jest.fn().mockImplementation(logNothing);
+    mockCtx.logWarn = jest.fn().mockImplementation(logNothing);
     return mockCtx;
 };
 
@@ -760,8 +761,6 @@ test('should try the next url when the previous one fails', async () => {
 
     const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
     const ctx = createMockAppContext();
-    const mockLogError = jest.fn();
-    ctx.logError = mockLogError;
 
     const poller = new DynamicConfigPoller(ctx, 'test-namespace', {
         url: 'https://primary.example.com/config',
@@ -775,8 +774,9 @@ test('should try the next url when the previous one fails', async () => {
     expect(mockAxiosGet).toHaveBeenCalledTimes(2);
     expect(mockAxiosGet.mock.calls[0][0]).toContain('https://primary.example.com/config');
     expect(mockAxiosGet.mock.calls[1][0]).toContain('https://fallback.example.com/config');
-    expect(mockLogError).toHaveBeenCalledTimes(1);
-    expect(mockLogError).toHaveBeenCalledWith(
+    expect(ctx.logError).not.toHaveBeenCalled();
+    expect(ctx.logWarn).toHaveBeenCalledTimes(1);
+    expect(ctx.logWarn).toHaveBeenCalledWith(
         'Dynamic config: url failed, trying next',
         expect.any(Error),
         {namespace: 'test-namespace', url: 'https://primary.example.com/config'},
@@ -784,4 +784,39 @@ test('should try the next url when the previous one fails', async () => {
     expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toEqual({
         gravity: 9.81,
     });
+});
+
+test('should keep previous value and reschedule when every url fails', async () => {
+    // ARRANGE
+    const mockAxiosGet = jest.fn().mockRejectedValue(new Error('down'));
+    jest.doMock('axios', () => ({__esModule: true, default: {get: mockAxiosGet}}));
+
+    const {DynamicConfigPoller} = require('../../lib/dynamic-config-poller');
+    const ctx = createMockAppContext();
+
+    const previousValue = {gravity: 9.81};
+    (ctx.dynamicConfig as Record<string, unknown>)['test-namespace'] = previousValue;
+
+    const poller = new DynamicConfigPoller(ctx, 'test-namespace', {
+        url: 'https://primary.example.com/config',
+        fallbackUrls: ['https://fallback.example.com/config'],
+        interval: MOCK_INTERVAL,
+    });
+    const spyOnStartPolling = jest.spyOn(poller, 'startPolling');
+
+    // ACT
+    await poller.startPolling();
+
+    // ASSERT
+    expect(mockAxiosGet).toHaveBeenCalledTimes(2);
+    expect(ctx.logWarn).toHaveBeenCalledTimes(1);
+    expect(ctx.logError).toHaveBeenCalledWith(
+        'Dynamic config: fetch failed',
+        expect.any(Error),
+        expect.objectContaining({namespace: 'test-namespace'}),
+    );
+    expect((ctx.dynamicConfig as Record<string, unknown>)['test-namespace']).toBe(previousValue);
+
+    await proceedWithTicksAndTimers(1);
+    expect(spyOnStartPolling).toHaveBeenCalledTimes(2);
 });

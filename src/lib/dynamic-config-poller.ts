@@ -26,8 +26,10 @@ interface DynamicConfigBase {
 interface DynamicConfigWithUrl extends DynamicConfigBase {
     /** Source URL fetched via the built-in HTTP GET. */
     url: string;
-    /** Tried in order when `url` does not respond with HTTP success. */
+    /** Tried in order when the request to `url` fails. Headers are sent to every url. */
     fallbackUrls?: string[];
+    /** Per-request timeout in ms. Without it a hanging host blocks fallbacks and the next poll. */
+    timeout?: number;
     /** Static headers. */
     headers?: Record<string, string>;
     /** Dynamic headers. */
@@ -39,6 +41,7 @@ interface DynamicConfigWithUrl extends DynamicConfigBase {
 interface DynamicConfigWithFetch extends DynamicConfigBase {
     url?: never;
     fallbackUrls?: never;
+    timeout?: never;
     headers?: never;
     dynamicHeaders?: never;
     /** Custom fetcher for the raw config value. */
@@ -49,6 +52,7 @@ interface DynamicConfigWithFetch extends DynamicConfigBase {
 interface DynamicConfigWithFile extends DynamicConfigBase {
     url?: never;
     fallbackUrls?: never;
+    timeout?: never;
     headers?: never;
     dynamicHeaders?: never;
     fetch?: never;
@@ -96,6 +100,10 @@ export class DynamicConfigPoller {
 
         const requestConfig: AxiosRequestConfig = {};
 
+        if (dynamicConfigSetup.timeout) {
+            requestConfig.timeout = dynamicConfigSetup.timeout;
+        }
+
         try {
             const headers: Record<string, string> = {};
 
@@ -130,7 +138,7 @@ export class DynamicConfigPoller {
                     if (index + 1 >= urls.length) {
                         return this.onError(error);
                     }
-                    this.ctx.logError('Dynamic config: url failed, trying next', error, {
+                    this.ctx.logWarn('Dynamic config: url failed, trying next', error, {
                         namespace,
                         url: urls[index],
                     });
