@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.20.0](https://github.com/gravity-ui/nodekit/compare/v2.19.0...v2.20.0) (2026-10-13)
+
+
+### Features
+
+* support fallback urls for dynamic config ([#161](https://github.com/gravity-ui/nodekit/issues/161)) ([0d7dfa0](https://github.com/gravity-ui/nodekit/commit/0d7dfa016752bfc02eee5119fdc27bb704211aa5))
+
 ## [2.19.0](https://github.com/gravity-ui/nodekit/compare/v2.18.1...v2.19.0) (2026-10-12)
 
 
