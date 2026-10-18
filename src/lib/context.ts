@@ -70,6 +70,14 @@ export class AppContext {
     spanExporter?: tracing.SpanExporter;
 
     get abortSignal(): AbortSignal {
+        if (!this.abortController) {
+            this.abortController = new AbortController();
+
+            if (this.ended) {
+                this.abortController.abort();
+            }
+        }
+
         return this.abortController.signal;
     }
 
@@ -81,14 +89,14 @@ export class AppContext {
     private loggerPrefix: string;
     private loggerPostfix: string;
     private loggerExtra?: Dict;
-    private abortController: AbortController;
+    private abortController?: AbortController;
+    private ended = false;
     private parentAbortListener?: () => void;
     private nonInheritableParamNames: Set<keyof AppContextParams>;
 
     constructor(name: string, params: ContextParams) {
         this.name = name;
         this.startTime = Date.now();
-        this.abortController = new AbortController();
         this.nonInheritableParamNames = new Set<keyof AppContextParams>();
 
         if (isContextParentParams(params)) {
@@ -306,7 +314,7 @@ export class AppContext {
     }
 
     isEnded() {
-        return this.abortSignal.aborted;
+        return this.ended;
     }
 
     end() {
@@ -314,8 +322,9 @@ export class AppContext {
             this.logger.warn(this.prepareLogMessage('Trying to call end in ended context'));
             return;
         }
+        this.ended = true;
         this.removeParentAbortListener();
-        this.abortController.abort();
+        this.abortController?.abort();
         this.endTime = Date.now();
         if (this.span) {
             this.span.end();
@@ -328,12 +337,7 @@ export class AppContext {
             return;
         }
         this.logError('context failed', error);
-        this.removeParentAbortListener();
-        this.abortController.abort();
-        this.endTime = Date.now();
-        if (this.span) {
-            this.span.end();
-        }
+        this.end();
     }
 
     getTime() {
