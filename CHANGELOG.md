@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.20.1](https://github.com/gravity-ui/nodekit/compare/v2.20.0...v2.20.1) (2026-10-18)
+
+
+### Performance Improvements
+
+* create AppContext abort controller lazily ([#163](https://github.com/gravity-ui/nodekit/issues/163)) ([c36ab63](https://github.com/gravity-ui/nodekit/commit/c36ab632f9b4792e6fc8515a60208e1801a8f0ab))
+
 ## [2.20.0](https://github.com/gravity-ui/nodekit/compare/v2.19.0...v2.20.0) (2026-10-13)
 
 
