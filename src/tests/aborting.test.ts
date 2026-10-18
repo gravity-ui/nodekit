@@ -1,6 +1,6 @@
 import {NodeKit} from '..';
 
-test('creates signal by default', () => {
+test('is not ended by default', () => {
     const nodekit = new NodeKit();
     expect(nodekit.ctx.isEnded()).toBe(false);
 });
@@ -156,5 +156,57 @@ describe('parent abort listener cleanup', () => {
         expect(spy.removeCalls[0][1]).toBe(listenerRef);
 
         spy.restore();
+    });
+});
+
+describe('lazy abort signal', () => {
+    const nodekit = new NodeKit();
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('does not abort a controller for a context whose signal was never read', () => {
+        const parent = nodekit.ctx.create('parent');
+        const child = parent.create('child');
+        const abortSpy = jest.spyOn(AbortController.prototype, 'abort');
+
+        child.end();
+
+        expect(child.isEnded()).toBe(true);
+        expect(abortSpy).not.toHaveBeenCalled();
+    });
+
+    it('returns an aborted signal when read after end()', () => {
+        const ctx = nodekit.ctx.create('ctx');
+
+        ctx.end();
+        const signal = ctx.abortSignal;
+
+        expect(signal.aborted).toBe(true);
+        expect((signal.reason as DOMException).name).toBe('AbortError');
+        expect(ctx.abortSignal).toBe(signal);
+    });
+
+    it('aborts a signal read before end()', () => {
+        const ctx = nodekit.ctx.create('ctx');
+        const listener = jest.fn();
+
+        ctx.abortSignal.addEventListener('abort', listener);
+        ctx.end();
+
+        expect(listener).toHaveBeenCalledTimes(1);
+        expect(ctx.abortSignal.aborted).toBe(true);
+    });
+
+    it('aborts the signal of a child ended through its parent', () => {
+        const parent = nodekit.ctx.create('parent');
+        const child = parent.create('child');
+        const signal = child.abortSignal;
+
+        parent.end();
+
+        expect(child.isEnded()).toBe(true);
+        expect(signal.aborted).toBe(true);
     });
 });
