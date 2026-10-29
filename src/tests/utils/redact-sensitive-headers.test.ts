@@ -30,6 +30,7 @@ it('correctly removes sensitive data from headers using default config', () => {
         Cookie: 'some-cookie-value',
         SomeHeader: 'non-secret-header',
         Referer: 'https://example.com/?token=secretValue',
+        Location: 'https://example.com/callback?token=secretValue',
     };
 
     const nk = new NodeKit({config: {appSensitiveQueryParams: ['token']}});
@@ -40,4 +41,7 @@ it('correctly removes sensitive data from headers using default config', () => {
 
     const redactedRefererParams = new URL(redactedHeaders['Referer'] as string).searchParams;
     expect(redactedRefererParams.get('token')).toEqual(REDACTED_STRING);
+
+    const redactedLocationParams = new URL(redactedHeaders['Location'] as string).searchParams;
+    expect(redactedLocationParams.get('token')).toEqual(REDACTED_STRING);
 });
