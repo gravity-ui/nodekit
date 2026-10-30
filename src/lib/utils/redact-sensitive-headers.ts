@@ -3,13 +3,13 @@ import {IncomingHttpHeaders, OutgoingHttpHeaders} from 'http';
 import {prepareSensitiveKeysRedacter} from './redact-sensitive-keys';
 import type {SensitiveQueryParamsRedacter} from './redact-sensitive-query-params';
 
-// Headers of both kinds are covered, since IncomingHttpHeaders is assignable to OutgoingHttpHeaders.
-// A union of the two would break inference for header objects holding numeric values
+// Headers of both kinds are covered, since IncomingHttpHeaders is assignable to OutgoingHttpHeaders
 type HttpHeaders = OutgoingHttpHeaders;
 
-export type SensitiveHeadersRedacter = <T extends HttpHeaders = IncomingHttpHeaders>(
-    inputHeaders?: T,
-) => T;
+export interface SensitiveHeadersRedacter {
+    (inputHeaders?: IncomingHttpHeaders): IncomingHttpHeaders;
+    (inputHeaders?: OutgoingHttpHeaders): OutgoingHttpHeaders;
+}
 
 export default function prepareSensitiveHeadersRedacter(
     sensitiveHeaders: Array<string> = [],
@@ -33,9 +33,7 @@ export default function prepareSensitiveHeadersRedacter(
             : headerValue;
     };
 
-    const redactSensitiveHeaders: SensitiveHeadersRedacter = <T extends HttpHeaders>(
-        inputHeaders: T = {} as T,
-    ) => {
+    const redactSensitiveHeaders = (inputHeaders: HttpHeaders = {}): HttpHeaders => {
         if (isDevMode) {
             return inputHeaders;
         }
@@ -48,7 +46,8 @@ export default function prepareSensitiveHeadersRedacter(
             }
         });
 
-        return result as T;
+        return result as HttpHeaders;
     };
-    return redactSensitiveHeaders;
+
+    return redactSensitiveHeaders as SensitiveHeadersRedacter;
 }
