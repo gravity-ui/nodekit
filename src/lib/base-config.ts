@@ -10,7 +10,7 @@ export const NODEKIT_BASE_CONFIG: AppConfig = {
         'x-csrf-token',
         'x-xsrf-token',
     ],
-    nkDefaultHeadersWithSensitiveUrls: ['referer'],
+    nkDefaultHeadersWithSensitiveUrls: ['referer', 'location'],
     nkDefaultSensitiveQueryParams: [],
     nkDefaultShutdownTimeout: 20000,
 };

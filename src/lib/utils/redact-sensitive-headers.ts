@@ -1,13 +1,20 @@
-import {IncomingHttpHeaders} from 'http';
+import {IncomingHttpHeaders, OutgoingHttpHeaders} from 'http';
 
 import {prepareSensitiveKeysRedacter} from './redact-sensitive-keys';
+import type {SensitiveQueryParamsRedacter} from './redact-sensitive-query-params';
 
-export type SensitiveHeadersRedacter = (inputHeaders?: IncomingHttpHeaders) => IncomingHttpHeaders;
+// Headers of both kinds are covered, since IncomingHttpHeaders is assignable to OutgoingHttpHeaders
+type HttpHeaders = OutgoingHttpHeaders;
+
+export interface SensitiveHeadersRedacter {
+    (inputHeaders?: IncomingHttpHeaders): IncomingHttpHeaders;
+    (inputHeaders?: OutgoingHttpHeaders): OutgoingHttpHeaders;
+}
 
 export default function prepareSensitiveHeadersRedacter(
     sensitiveHeaders: Array<string> = [],
     headersWithSensitiveUrls: Array<string> = [],
-    redactSensitiveQueryParams: (input: string) => string = (input) => input,
+    redactSensitiveQueryParams: SensitiveQueryParamsRedacter = (input = '') => input,
     isDevMode = false,
 ) {
     const headersWithSensitiveUrlsLowered = headersWithSensitiveUrls.map((name) =>
@@ -15,20 +22,32 @@ export default function prepareSensitiveHeadersRedacter(
     );
     const redactSensitiveKeys = prepareSensitiveKeysRedacter(sensitiveHeaders);
 
-    const redactSensitiveHeaders: SensitiveHeadersRedacter = (inputHeaders = {}) => {
+    // Header value may also be multi-valued, a number or undefined, only urls can be redacted
+    const redactHeaderValue = (headerValue: unknown): unknown => {
+        if (Array.isArray(headerValue)) {
+            return headerValue.map(redactHeaderValue);
+        }
+
+        return typeof headerValue === 'string'
+            ? redactSensitiveQueryParams(headerValue)
+            : headerValue;
+    };
+
+    const redactSensitiveHeaders = (inputHeaders: HttpHeaders = {}): HttpHeaders => {
         if (isDevMode) {
             return inputHeaders;
         }
 
-        const result = redactSensitiveKeys(inputHeaders) as IncomingHttpHeaders;
+        const result = redactSensitiveKeys(inputHeaders);
 
         Object.keys(result).forEach((headerName) => {
             if (headersWithSensitiveUrlsLowered.includes(headerName.toLowerCase())) {
-                result[headerName] = redactSensitiveQueryParams(result[headerName] as string);
+                result[headerName] = redactHeaderValue(result[headerName]);
             }
         });
 
-        return result;
+        return result as HttpHeaders;
     };
-    return redactSensitiveHeaders;
+
+    return redactSensitiveHeaders as SensitiveHeadersRedacter;
 }
