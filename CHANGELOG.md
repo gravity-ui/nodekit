@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.21.0](https://github.com/gravity-ui/nodekit/compare/v2.20.1...v2.21.0) (2026-10-30)
+
+
+### Features
+
+* remove sensitive headers from location ([#167](https://github.com/gravity-ui/nodekit/issues/167)) ([ea67878](https://github.com/gravity-ui/nodekit/commit/ea67878a93562d8a98d873efae767fe570b74b53))
+
 ## [2.20.1](https://github.com/gravity-ui/nodekit/compare/v2.20.0...v2.20.1) (2026-10-18)
 
 
