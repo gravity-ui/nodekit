@@ -1,87 +1,76 @@
-import {URL, URLSearchParams} from 'url';
-
 import {REDACTED_STRING} from '../consts';
 
 export type SensitiveQueryParamsRedacter = (input?: string) => string;
 
-// Relative urls are supported by parsing them against a base that is stripped back on serialization
-const RELATIVE_URL_BASE = 'http://127.0.0.1';
+const PARAMS_SEPARATOR = '&';
+// Percent-encoded, so that the result stays a valid url and decodes back to REDACTED_STRING
+const REDACTED_VALUE = encodeURIComponent(REDACTED_STRING);
+// A param is started by any url delimiter, not just by `&`: `#access_token=...`, `/cb;token=...`,
+// `#/folder/id=5?token=...`. Anchoring the key to a delimiter keeps `csrf_token` out of `token`
+const PARAM_KEY_PATTERN = /(?:^|[?;/#])([^=&?;/#]*)=/g;
 
-function parseUrl(input: string): URL | undefined {
+function decodeParamKey(rawKey: string): string {
     try {
-        return new URL(input, RELATIVE_URL_BASE);
+        return decodeURIComponent(rawKey.replace(/\+/g, ' '));
     } catch {
-        return undefined;
+        // Malformed encoding, the raw key is still worth matching
+        return rawKey;
     }
 }
 
-function serializeUrl(parsedUrl: URL): string {
-    const result = parsedUrl.toString();
+/**
+ * `qs` style params carry the name in brackets: `token[]=`, `token[0]=`, `auth[token]=`. Every
+ * bracketed segment is a name on its own, and is still compared whole, so that a merely similar
+ * name like `csrf_token` keeps being left alone.
+ */
+function getParamKeyNames(rawKey: string): Array<string> {
+    const key = decodeParamKey(rawKey).toLowerCase();
 
-    return result.startsWith(RELATIVE_URL_BASE) ? result.replace(RELATIVE_URL_BASE, '') : result;
+    return key.includes('[') ? key.split(/[[\]]/).filter(Boolean) : [key];
 }
 
-function mentionsSensitiveQueryParam(input: string, sensitiveQueryParams: Array<string>): boolean {
-    const loweredInput = input.toLowerCase();
+/**
+ * Redacts values of sensitive params of an `&`-separated part. A value is taken up to the next `#`
+ * or to the end of the part, since a nested `?`, `;` or `/` may well belong to it.
+ */
+function redactParamsPart(part: string, loweredSensitiveParams: Array<string>): string {
+    // Matching the whole part upfront would skip keys that only match once decoded
+    for (const match of part.matchAll(PARAM_KEY_PATTERN)) {
+        const keyNames = getParamKeyNames(match[1]);
 
-    return sensitiveQueryParams.some((key) => loweredInput.includes(`${key.toLowerCase()}=`));
-}
+        if (keyNames.some((keyName) => loweredSensitiveParams.includes(keyName))) {
+            const valueStartIndex = match.index + match[0].length;
+            const fragmentStartIndex = part.indexOf('#', valueStartIndex);
+            const redactedHead = `${part.slice(0, valueStartIndex)}${REDACTED_VALUE}`;
 
-/** Redacts params in place, returns true if anything was redacted */
-function redactParams(params: URLSearchParams, sensitiveQueryParams: Array<string>): boolean {
-    const matchedSensitiveQueryParams = sensitiveQueryParams.filter((key) => params.has(key));
-
-    matchedSensitiveQueryParams.forEach((key) => params.set(key, REDACTED_STRING));
-
-    return matchedSensitiveQueryParams.length > 0;
-}
-
-/** Redacts params carried by the url fragment in place, returns true if anything was redacted */
-function redactHashParams(parsedUrl: URL, sensitiveQueryParams: Array<string>): boolean {
-    const hash = parsedUrl.hash.slice(1);
-
-    if (!hash.includes('=')) {
-        return false;
+            return fragmentStartIndex === -1
+                ? redactedHead
+                : redactedHead +
+                      redactParamsPart(part.slice(fragmentStartIndex), loweredSensitiveParams);
+        }
     }
 
-    // Fragment may carry params directly (#access_token=...) or after a path (#/callback?token=...)
-    const queryStartIndex = hash.indexOf('?');
-    const pathPrefix = queryStartIndex === -1 ? '' : hash.slice(0, queryStartIndex + 1);
-    const hashParams = new URLSearchParams(
-        queryStartIndex === -1 ? hash : hash.slice(queryStartIndex + 1),
-    );
-
-    if (!redactParams(hashParams, sensitiveQueryParams)) {
-        return false;
-    }
-
-    parsedUrl.hash = `#${pathPrefix}${hashParams.toString()}`;
-
-    return true;
+    return part;
 }
 
 export default function prepareSensitiveQueryParamsRedacter(
     sensitiveQueryParams: Array<string> = [],
     isDevMode = false,
 ) {
+    const loweredSensitiveQueryParams = sensitiveQueryParams.map((key) => key.toLowerCase());
+
     const redactSensitiveQueryParams: SensitiveQueryParamsRedacter = (input = ''): string => {
-        if (isDevMode || !input || sensitiveQueryParams.length === 0) {
+        if (isDevMode || !input || loweredSensitiveQueryParams.length === 0) {
             return input;
         }
 
-        const parsedUrl = parseUrl(input);
-
-        if (!parsedUrl) {
-            // Value is not a parsable url, so there is no way to redact it selectively
-            return mentionsSensitiveQueryParam(input, sensitiveQueryParams)
-                ? REDACTED_STRING
-                : input;
-        }
-
-        const queryRedacted = redactParams(parsedUrl.searchParams, sensitiveQueryParams);
-        const hashRedacted = redactHashParams(parsedUrl, sensitiveQueryParams);
-
-        return queryRedacted || hashRedacted ? serializeUrl(parsedUrl) : input;
+        // Params are found by hand rather than by parsing the input into an URL and serializing it
+        // back: a round-trip needs a base to resolve relative urls against, and can then only
+        // guess how to strip it off again. Everything but a redacted value is kept byte-for-byte
+        return input
+            .split(PARAMS_SEPARATOR)
+            .map((part) => redactParamsPart(part, loweredSensitiveQueryParams))
+            .join(PARAMS_SEPARATOR);
     };
 
     return redactSensitiveQueryParams;

@@ -48,24 +48,36 @@ it('correctly removes sensitive data from headers using default config', () => {
 
 it('correctly removes sensitive data from relative and multi-value header urls', () => {
     const queryParamsRedacter = prepareSensitiveQueryParamsRedacter(['token']);
+    // Only headers whose whole value is an url are supported, structured ones are not
     const headersRedacter = prepareSensitiveHeadersRedacter(
         [],
-        ['location', 'link'],
+        ['location', 'x-redirect-url'],
         queryParamsRedacter,
     );
 
     const redactedHeaders = headersRedacter({
         location: '/callback?token=secretValue&a=1',
-        link: ['/first?token=secretValue', '/second?token=secretValue'],
+        'x-redirect-url': ['/first?token=secretValue', '/second?token=secretValue'],
     });
 
     expect(redactedHeaders['location']).toEqual(
         `/callback?token=${encodeURIComponent(REDACTED_STRING)}&a=1`,
     );
-    expect(redactedHeaders['link']).toEqual([
+    expect(redactedHeaders['x-redirect-url']).toEqual([
         `/first?token=${encodeURIComponent(REDACTED_STRING)}`,
         `/second?token=${encodeURIComponent(REDACTED_STRING)}`,
     ]);
+});
+
+it('keeps the origin of a redirect to a local address intact', () => {
+    const queryParamsRedacter = prepareSensitiveQueryParamsRedacter(['token']);
+    const headersRedacter = prepareSensitiveHeadersRedacter([], ['location'], queryParamsRedacter);
+
+    const redactedHeaders = headersRedacter({location: 'http://127.0.0.1:8080/cb?token=secret'});
+
+    expect(redactedHeaders['location']).toEqual(
+        `http://127.0.0.1:8080/cb?token=${encodeURIComponent(REDACTED_STRING)}`,
+    );
 });
 
 it('keeps non-string header values as is', () => {
