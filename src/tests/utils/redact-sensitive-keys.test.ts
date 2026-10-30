@@ -53,6 +53,13 @@ it('removes sensitive keys regardless of case in configuration', () => {
     expect(redactedData.verysensitivevalue).toEqual(REDACTED_STRING);
 });
 
+it('keeps a multi-valued sensitive key an array', () => {
+    const redactSensitiveKeys = prepareSensitiveKeysRedacter(getTestConfiguration());
+    const redactedData = redactSensitiveKeys({verySensitiveValue: ['first', 'second']});
+
+    expect(redactedData.verySensitiveValue).toEqual([REDACTED_STRING, REDACTED_STRING]);
+});
+
 it('does not affect data inside objects', () => {
     const redactSensitiveKeys = prepareSensitiveKeysRedacter(getTestConfiguration());
     const redactedData = redactSensitiveKeys(getTestData());

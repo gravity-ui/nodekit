@@ -8,7 +8,9 @@ export function prepareSensitiveKeysRedacter(keysToRemove: string[] = []) {
     const redactSensitiveKeys: SensitiveKeysRedacter = (inputObject: Dict) => {
         return Object.keys(inputObject).reduce((result, key) => {
             if (loweredKeysToRemove.includes(key.toLowerCase())) {
-                result[key] = REDACTED_STRING;
+                result[key] = Array.isArray(inputObject[key])
+                    ? inputObject[key].map(() => REDACTED_STRING)
+                    : REDACTED_STRING;
             } else {
                 result[key] = inputObject[key];
             }

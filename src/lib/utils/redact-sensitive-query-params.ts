@@ -19,48 +19,63 @@ function decodeParamKey(rawKey: string): string {
 }
 
 /**
- * `qs` style params carry the name in brackets: `token[]=`, `token[0]=`, `auth[token]=`. Every
- * bracketed segment is a name on its own, and is still compared whole, so that a merely similar
- * name like `csrf_token` keeps being left alone.
+ * `qs` style params carry the name in brackets, which is read as a path of names:
+ * `auth[token][0]=` means `auth` → `token` → `0`.
  */
-function getParamKeyNames(rawKey: string): Array<string> {
+function getParamKeyPath(rawKey: string): Array<string> {
     const key = decodeParamKey(rawKey).toLowerCase();
 
     return key.includes('[') ? key.split(/[[\]]/).filter(Boolean) : [key];
 }
 
 /**
+ * A configured name matches when its own path runs through the path of the key, so that both
+ * `token` and `auth[token]` match `auth[token][0]=`. Names are compared whole, which leaves a
+ * merely similar `csrf_token` alone.
+ */
+function matchesKeyPath(keyPath: Array<string>, sensitiveNamePath: Array<string>): boolean {
+    return keyPath.some((_, startIndex) =>
+        sensitiveNamePath.every((name, offset) => keyPath[startIndex + offset] === name),
+    );
+}
+
+/**
  * Redacts values of sensitive params of an `&`-separated part. A value is taken up to the next `#`
  * or to the end of the part, since a nested `?`, `;` or `/` may well belong to it.
  */
-function redactParamsPart(part: string, loweredSensitiveParams: Array<string>): string {
+function redactParamsPart(part: string, sensitiveNamePaths: Array<Array<string>>): string {
+    let redacted = '';
+    let copiedUntilIndex = 0;
+    let valueEndIndex = 0;
+
     // Matching the whole part upfront would skip keys that only match once decoded
     for (const match of part.matchAll(PARAM_KEY_PATTERN)) {
-        const keyNames = getParamKeyNames(match[1]);
+        const keyPath = getParamKeyPath(match[1]);
 
-        if (keyNames.some((keyName) => loweredSensitiveParams.includes(keyName))) {
+        if (
+            match.index >= valueEndIndex &&
+            sensitiveNamePaths.some((namePath) => matchesKeyPath(keyPath, namePath))
+        ) {
             const valueStartIndex = match.index + match[0].length;
             const fragmentStartIndex = part.indexOf('#', valueStartIndex);
-            const redactedHead = `${part.slice(0, valueStartIndex)}${REDACTED_VALUE}`;
 
-            return fragmentStartIndex === -1
-                ? redactedHead
-                : redactedHead +
-                      redactParamsPart(part.slice(fragmentStartIndex), loweredSensitiveParams);
+            redacted += `${part.slice(copiedUntilIndex, valueStartIndex)}${REDACTED_VALUE}`;
+            valueEndIndex = fragmentStartIndex === -1 ? part.length : fragmentStartIndex;
+            copiedUntilIndex = valueEndIndex;
         }
     }
 
-    return part;
+    return redacted + part.slice(copiedUntilIndex);
 }
 
 export default function prepareSensitiveQueryParamsRedacter(
     sensitiveQueryParams: Array<string> = [],
     isDevMode = false,
 ) {
-    const loweredSensitiveQueryParams = sensitiveQueryParams.map((key) => key.toLowerCase());
+    const sensitiveNamePaths = sensitiveQueryParams.map(getParamKeyPath);
 
     const redactSensitiveQueryParams: SensitiveQueryParamsRedacter = (input = ''): string => {
-        if (isDevMode || !input || loweredSensitiveQueryParams.length === 0) {
+        if (isDevMode || !input || sensitiveNamePaths.length === 0) {
             return input;
         }
 
@@ -69,7 +84,7 @@ export default function prepareSensitiveQueryParamsRedacter(
         // guess how to strip it off again. Everything but a redacted value is kept byte-for-byte
         return input
             .split(PARAMS_SEPARATOR)
-            .map((part) => redactParamsPart(part, loweredSensitiveQueryParams))
+            .map((part) => redactParamsPart(part, sensitiveNamePaths))
             .join(PARAMS_SEPARATOR);
     };
 

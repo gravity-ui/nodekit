@@ -189,6 +189,45 @@ it('matches bracketed param names', () => {
     );
 });
 
+it('matches a bracketed param name configured in full', () => {
+    const redactSensitiveQueryParams = prepareSensitiveQueryParamsRedacter(['auth[token]']);
+    const redactedToken = encodeURIComponent(REDACTED_STRING);
+
+    // Standard serialization percent-encodes the brackets
+    const query = new URLSearchParams({'auth[token]': 'sensitiveData'}).toString();
+
+    expect(redactSensitiveQueryParams(`/cb?${query}`)).toEqual(
+        `/cb?auth%5Btoken%5D=${redactedToken}`,
+    );
+    expect(redactSensitiveQueryParams('/cb?auth[token]=sensitiveData')).toEqual(
+        `/cb?auth[token]=${redactedToken}`,
+    );
+    // An array or a deeper nesting appends to the name of the configured param
+    expect(redactSensitiveQueryParams('/cb?auth[token][]=sensitiveData')).toEqual(
+        `/cb?auth[token][]=${redactedToken}`,
+    );
+    expect(redactSensitiveQueryParams('/cb?auth[token][0]=sensitiveData')).toEqual(
+        `/cb?auth[token][0]=${redactedToken}`,
+    );
+    // A name the config does not ask for is left alone, even when a part of it matches
+    expect(redactSensitiveQueryParams('/cb?token=notAsked&auth[id]=notAsked')).toEqual(
+        '/cb?token=notAsked&auth[id]=notAsked',
+    );
+});
+
+it('redacts an input carrying thousands of fragments', () => {
+    const redactSensitiveQueryParams = prepareSensitiveQueryParamsRedacter(['t']);
+    const redactedToken = encodeURIComponent(REDACTED_STRING);
+
+    // Such an input fits into the default http.maxHeaderSize, so it must not exhaust the stack
+    const fragmentsCount = 4000;
+    const redactedUrl = redactSensitiveQueryParams(
+        `https://example.com/#${'t=#'.repeat(fragmentsCount)}`,
+    );
+
+    expect(redactedUrl.split(redactedToken)).toHaveLength(fragmentsCount + 1);
+});
+
 it('keeps every occurrence of a repeated param', () => {
     const redactSensitiveQueryParams = prepareSensitiveQueryParamsRedacter(['token']);
     const redactedToken = encodeURIComponent(REDACTED_STRING);

@@ -25,6 +25,18 @@ it('correctly removes sensitive data from headers', () => {
     expect(redactedRefererParams.get('someSecretParameter')).toEqual(REDACTED_STRING);
 });
 
+it('keeps a redacted multi-value header an array', () => {
+    const inputHeaders = {'set-cookie': ['first=1', 'second=2']};
+
+    // The value type promised by IncomingHttpHeaders has to survive redaction
+    const redactedHeaders = prepareSensitiveHeadersRedacter(['set-cookie'])(inputHeaders);
+
+    expect(redactedHeaders['set-cookie']).toEqual([REDACTED_STRING, REDACTED_STRING]);
+    expect(redactedHeaders['set-cookie']?.join(', ')).toEqual(
+        `${REDACTED_STRING}, ${REDACTED_STRING}`,
+    );
+});
+
 it('correctly removes sensitive data from headers using default config', () => {
     const inputHeaders = {
         Cookie: 'some-cookie-value',
