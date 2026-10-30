@@ -1,48 +1,87 @@
-import {URL} from 'url';
+import {URL, URLSearchParams} from 'url';
 
-import {Dict} from '../../types';
-
-import {prepareSensitiveKeysRedacter} from './redact-sensitive-keys';
+import {REDACTED_STRING} from '../consts';
 
 export type SensitiveQueryParamsRedacter = (input?: string) => string;
+
+// Relative urls are supported by parsing them against a base that is stripped back on serialization
+const RELATIVE_URL_BASE = 'http://127.0.0.1';
+
+function parseUrl(input: string): URL | undefined {
+    try {
+        return new URL(input, RELATIVE_URL_BASE);
+    } catch {
+        return undefined;
+    }
+}
+
+function serializeUrl(parsedUrl: URL): string {
+    const result = parsedUrl.toString();
+
+    return result.startsWith(RELATIVE_URL_BASE) ? result.replace(RELATIVE_URL_BASE, '') : result;
+}
+
+function mentionsSensitiveQueryParam(input: string, sensitiveQueryParams: Array<string>): boolean {
+    const loweredInput = input.toLowerCase();
+
+    return sensitiveQueryParams.some((key) => loweredInput.includes(`${key.toLowerCase()}=`));
+}
+
+/** Redacts params in place, returns true if anything was redacted */
+function redactParams(params: URLSearchParams, sensitiveQueryParams: Array<string>): boolean {
+    const matchedSensitiveQueryParams = sensitiveQueryParams.filter((key) => params.has(key));
+
+    matchedSensitiveQueryParams.forEach((key) => params.set(key, REDACTED_STRING));
+
+    return matchedSensitiveQueryParams.length > 0;
+}
+
+/** Redacts params carried by the url fragment in place, returns true if anything was redacted */
+function redactHashParams(parsedUrl: URL, sensitiveQueryParams: Array<string>): boolean {
+    const hash = parsedUrl.hash.slice(1);
+
+    if (!hash.includes('=')) {
+        return false;
+    }
+
+    // Fragment may carry params directly (#access_token=...) or after a path (#/callback?token=...)
+    const queryStartIndex = hash.indexOf('?');
+    const pathPrefix = queryStartIndex === -1 ? '' : hash.slice(0, queryStartIndex + 1);
+    const hashParams = new URLSearchParams(
+        queryStartIndex === -1 ? hash : hash.slice(queryStartIndex + 1),
+    );
+
+    if (!redactParams(hashParams, sensitiveQueryParams)) {
+        return false;
+    }
+
+    parsedUrl.hash = `#${pathPrefix}${hashParams.toString()}`;
+
+    return true;
+}
 
 export default function prepareSensitiveQueryParamsRedacter(
     sensitiveQueryParams: Array<string> = [],
     isDevMode = false,
 ) {
     const redactSensitiveQueryParams: SensitiveQueryParamsRedacter = (input = ''): string => {
-        if (isDevMode || !input) {
+        if (isDevMode || !input || sensitiveQueryParams.length === 0) {
             return input;
         }
 
-        if (sensitiveQueryParams.length === 0) {
-            return input;
+        const parsedUrl = parseUrl(input);
+
+        if (!parsedUrl) {
+            // Value is not a parsable url, so there is no way to redact it selectively
+            return mentionsSensitiveQueryParam(input, sensitiveQueryParams)
+                ? REDACTED_STRING
+                : input;
         }
 
-        const defaultBase = 'http://127.0.0.1';
-        const parsedUrl = new URL(input, defaultBase);
+        const queryRedacted = redactParams(parsedUrl.searchParams, sensitiveQueryParams);
+        const hashRedacted = redactHashParams(parsedUrl, sensitiveQueryParams);
 
-        const matchedSensitiveQueryParams = sensitiveQueryParams.reduce<Dict>((acc, key) => {
-            if (parsedUrl.searchParams.has(key)) {
-                acc[key] = parsedUrl.searchParams.get(key);
-            }
-            return acc;
-        }, {});
-
-        if (Object.keys(matchedSensitiveQueryParams).length === 0) {
-            return input;
-        }
-
-        const redactSensitiveKeys = prepareSensitiveKeysRedacter(sensitiveQueryParams);
-        const redactedSensitiveQueryParams = redactSensitiveKeys(matchedSensitiveQueryParams);
-
-        Object.keys(redactedSensitiveQueryParams).forEach((key) => {
-            parsedUrl.searchParams.set(key, redactedSensitiveQueryParams[key] as string);
-        });
-
-        const resultUrl = parsedUrl.toString();
-
-        return resultUrl.startsWith(defaultBase) ? resultUrl.replace(defaultBase, '') : resultUrl;
+        return queryRedacted || hashRedacted ? serializeUrl(parsedUrl) : input;
     };
 
     return redactSensitiveQueryParams;

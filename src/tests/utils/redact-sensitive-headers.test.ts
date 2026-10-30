@@ -45,3 +45,38 @@ it('correctly removes sensitive data from headers using default config', () => {
     const redactedLocationParams = new URL(redactedHeaders['Location'] as string).searchParams;
     expect(redactedLocationParams.get('token')).toEqual(REDACTED_STRING);
 });
+
+it('correctly removes sensitive data from relative and multi-value header urls', () => {
+    const queryParamsRedacter = prepareSensitiveQueryParamsRedacter(['token']);
+    const headersRedacter = prepareSensitiveHeadersRedacter(
+        [],
+        ['location', 'link'],
+        queryParamsRedacter,
+    );
+
+    const redactedHeaders = headersRedacter({
+        location: '/callback?token=secretValue&a=1',
+        link: ['/first?token=secretValue', '/second?token=secretValue'],
+    });
+
+    expect(redactedHeaders['location']).toEqual(
+        `/callback?token=${encodeURIComponent(REDACTED_STRING)}&a=1`,
+    );
+    expect(redactedHeaders['link']).toEqual([
+        `/first?token=${encodeURIComponent(REDACTED_STRING)}`,
+        `/second?token=${encodeURIComponent(REDACTED_STRING)}`,
+    ]);
+});
+
+it('keeps non-string header values as is', () => {
+    const queryParamsRedacter = prepareSensitiveQueryParamsRedacter(['token']);
+    const headersRedacter = prepareSensitiveHeadersRedacter(
+        [],
+        ['location', 'x-cache-ttl'],
+        queryParamsRedacter,
+    );
+
+    const redactedHeaders = headersRedacter({location: undefined, 'x-cache-ttl': 42});
+
+    expect(redactedHeaders).toEqual({location: undefined, 'x-cache-ttl': 42});
+});
