@@ -44,6 +44,22 @@ describe('shutdown timeout configuration', () => {
         expect(exitSpy).toHaveBeenCalledWith(0);
     });
 
+    test('appShutdownDelay postpones shutdown handlers', () => {
+        jest.useFakeTimers();
+
+        const {nodekit} = setupNodeKit({appShutdownDelay: 500});
+        const handler = jest.fn();
+
+        nodekit.addShutdownHandler(handler);
+        process.emit('SIGTERM', 'SIGTERM');
+
+        jest.advanceTimersByTime(499);
+        expect(handler).not.toHaveBeenCalled();
+
+        jest.advanceTimersByTime(1);
+        expect(handler).toHaveBeenCalledWith('SIGTERM');
+    });
+
     test('appShutdownTimeout takes priority over nkDefaultShutdownTimeout', () => {
         jest.useFakeTimers();
 

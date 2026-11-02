@@ -185,11 +185,22 @@ export class NodeKit {
         const isTimeoutEnabled =
             typeof timeout === 'number' && Number.isFinite(timeout) && timeout > 0;
 
+        const delay = this.config.appShutdownDelay;
+        const isDelayEnabled = typeof delay === 'number' && Number.isFinite(delay) && delay > 0;
+
         const handleSignal: ShutdownHandler = (signal) => {
             signals.forEach((signalName) => process.off(signalName, handleSignal));
 
-            this.ctx.log('Received shutdown signal', {signal});
+            this.ctx.log('Received shutdown signal', {signal, delay: isDelayEnabled ? delay : 0});
 
+            if (isDelayEnabled) {
+                setTimeout(() => runShutdownHandlers(signal), delay);
+            } else {
+                runShutdownHandlers(signal);
+            }
+        };
+
+        const runShutdownHandlers = (signal: Parameters<ShutdownHandler>[0]) => {
             let code = 0;
 
             const promises = this.shutdownHandlers.map((handler) => {

@@ -120,6 +120,14 @@ export interface AppConfig {
      * Overrides nkDefaultShutdownTimeout when specified.
      */
     appShutdownTimeout?: number;
+
+    /**
+     * Delay in milliseconds between receiving a shutdown signal and running shutdown handlers.
+     * The app keeps serving requests during the delay, which lets an orchestrator
+     * (e.g. Kubernetes) stop routing new traffic to the instance before it closes.
+     * Not included in appShutdownTimeout.
+     */
+    appShutdownDelay?: number;
 }
 
 export interface AppContextParams {
