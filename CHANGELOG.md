@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.22.0](https://github.com/gravity-ui/nodekit/compare/v2.21.0...v2.22.0) (2026-11-03)
+
+
+### Features
+
+* extend dev mode detection ([#170](https://github.com/gravity-ui/nodekit/issues/170)) ([b86857b](https://github.com/gravity-ui/nodekit/commit/b86857b330682867175f5a8009893b18c1a325b0))
+
 ## [2.21.0](https://github.com/gravity-ui/nodekit/compare/v2.20.1...v2.21.0) (2026-10-30)
 
 
