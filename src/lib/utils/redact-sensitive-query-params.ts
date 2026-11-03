@@ -18,10 +18,6 @@ function decodeParamKey(rawKey: string): string {
     }
 }
 
-/**
- * `qs` style params carry the name in brackets, which is read as a path of names:
- * `auth[token][0]=` means `auth` → `token` → `0`.
- */
 function getParamKeyPath(rawKey: string): Array<string> {
     const key = decodeParamKey(rawKey).toLowerCase();
 
