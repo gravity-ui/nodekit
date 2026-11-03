@@ -84,7 +84,9 @@ Resulting configuration is merged in the following order (each line overriding p
 
 ### Development mode
 
-`nodekit.config.appDevMode` is defined by ENV variable `APP_DEV_MODE`. It's used internally for things like prettifying logs in development mode, but you can also use it in your application when you need it.
+`nodekit.config.appDevMode` enables development features such as pretty logs and is available to application code.
+
+The first defined value wins: non-empty `APP_DEV_MODE` → constructor `config.appDevMode` → file configs → `false`. Explicit `false` values, including `APP_DEV_MODE=0`, override lower-priority sources.
 
 We recommend to use `appDevMode` instead of specific development "environment" or "installation" since logically it often carries purposes that can be applied to any environment.
 

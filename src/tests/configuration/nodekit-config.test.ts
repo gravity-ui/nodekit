@@ -3,6 +3,7 @@ import path from 'path';
 import {AppConfig, NodeKit} from '../..';
 
 const MOCK_CONFIGS_PATH = './mockConfigs';
+const MOCK_DEV_MODE_CONFIGS_PATH = './mockDevModeConfigs';
 
 const FILE_CONFIG = {
     appName: 'fileConfigApp',
@@ -10,9 +11,22 @@ const FILE_CONFIG = {
     appLoggingLevel: 'warn',
 };
 
-jest.doMock(path.resolve(MOCK_CONFIGS_PATH, 'common'), () => FILE_CONFIG, {virtual: true});
+const DEV_MODE_FILE_CONFIG = {appDevMode: true};
 
-const ENV_KEYS = ['APP_NAME', 'APP_VERSION', 'APP_LOGGING_LEVEL'] as const;
+jest.doMock(path.resolve(MOCK_CONFIGS_PATH, 'common'), () => FILE_CONFIG, {virtual: true});
+jest.doMock(path.resolve(MOCK_DEV_MODE_CONFIGS_PATH, 'common'), () => DEV_MODE_FILE_CONFIG, {
+    virtual: true,
+});
+
+const ENV_KEYS = ['APP_NAME', 'APP_VERSION', 'APP_LOGGING_LEVEL', 'APP_DEV_MODE'] as const;
+
+const NOOP_LOGGER = {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    trace: jest.fn(),
+    debug: jest.fn(),
+};
 
 const setupNodeKit = ({config, configsPath}: {config?: AppConfig; configsPath?: string} = {}) => {
     const nodekit = new NodeKit({
@@ -139,6 +153,57 @@ describe('appVersion initialization', () => {
         const config = setupNodeKit({config: {appVersion: 'optionsVersion'}});
 
         expect(config.appVersion).toEqual('optionsVersion');
+    });
+});
+
+describe('appDevMode initialization', () => {
+    // dev mode makes initLogger spawn a pino-pretty transport, so these cases use a stub logger
+    const setupDevModeNodeKit = (config: AppConfig = {}) =>
+        setupNodeKit({
+            configsPath: MOCK_DEV_MODE_CONFIGS_PATH,
+            config: {appLogger: NOOP_LOGGER, ...config},
+        });
+
+    test('is disabled when nothing is provided', () => {
+        const config = setupNodeKit();
+
+        expect(config.appDevMode).toBe(false);
+    });
+
+    test('takes the flag from the file config', () => {
+        const config = setupDevModeNodeKit();
+
+        expect(config.appDevMode).toBe(true);
+    });
+
+    test('options config takes priority over the file config', () => {
+        const config = setupDevModeNodeKit({appDevMode: false});
+
+        expect(config.appDevMode).toBe(false);
+    });
+
+    test('APP_DEV_MODE env takes priority over the options and file configs', () => {
+        process.env.APP_DEV_MODE = '1';
+
+        const config = setupDevModeNodeKit({appDevMode: false});
+
+        expect(config.appDevMode).toBe(true);
+    });
+
+    test('falsy APP_DEV_MODE env takes priority over the options and file configs', () => {
+        process.env.APP_DEV_MODE = '0';
+
+        const config = setupDevModeNodeKit({appDevMode: true});
+
+        expect(config.appDevMode).toBe(false);
+    });
+
+    test('empty APP_DEV_MODE env falls back to the options config', () => {
+        process.env.APP_DEV_MODE = '';
+
+        const config = setupDevModeNodeKit({appDevMode: true});
+
+        expect(config.appDevMode).toBe(true);
     });
 });
 

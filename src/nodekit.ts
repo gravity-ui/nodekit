@@ -30,8 +30,14 @@ interface InitOptions {
     config?: AppConfig;
 }
 
-function resolveAppDevMode(configDevMode = false, fileConfigDevMode = false): boolean {
-    return isTrueEnvValue(process.env.APP_DEV_MODE ?? '') || configDevMode || fileConfigDevMode;
+function resolveAppDevMode(configDevMode?: boolean, fileConfigDevMode?: boolean): boolean {
+    const envDevMode = process.env.APP_DEV_MODE;
+
+    if (envDevMode) {
+        return isTrueEnvValue(envDevMode);
+    }
+
+    return configDevMode ?? fileConfigDevMode ?? false;
 }
 
 function prepareRedacters(config: AppConfig, appDevMode: boolean) {
