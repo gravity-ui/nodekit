@@ -18,21 +18,12 @@ function decodeParamKey(rawKey: string): string {
     }
 }
 
-/**
- * `qs` style params carry the name in brackets, which is read as a path of names:
- * `auth[token][0]=` means `auth` → `token` → `0`.
- */
 function getParamKeyPath(rawKey: string): Array<string> {
     const key = decodeParamKey(rawKey).toLowerCase();
 
     return key.includes('[') ? key.split(/[[\]]/).filter(Boolean) : [key];
 }
 
-/**
- * A configured name matches when its own path runs through the path of the key, so that both
- * `token` and `auth[token]` match `auth[token][0]=`. Names are compared whole, which leaves a
- * merely similar `csrf_token` alone.
- */
 function matchesKeyPath(keyPath: Array<string>, sensitiveNamePath: Array<string>): boolean {
     return keyPath.some((_, startIndex) =>
         sensitiveNamePath.every((name, offset) => keyPath[startIndex + offset] === name),
@@ -79,9 +70,6 @@ export default function prepareSensitiveQueryParamsRedacter(
             return input;
         }
 
-        // Params are found by hand rather than by parsing the input into an URL and serializing it
-        // back: a round-trip needs a base to resolve relative urls against, and can then only
-        // guess how to strip it off again. Everything but a redacted value is kept byte-for-byte
         return input
             .split(PARAMS_SEPARATOR)
             .map((part) => redactParamsPart(part, sensitiveNamePaths))

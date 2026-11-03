@@ -30,6 +30,10 @@ interface InitOptions {
     config?: AppConfig;
 }
 
+function resolveAppDevMode(configDevMode = false, fileConfigDevMode = false): boolean {
+    return isTrueEnvValue(process.env.APP_DEV_MODE ?? '') || configDevMode || fileConfigDevMode;
+}
+
 function prepareRedacters(config: AppConfig, appDevMode: boolean) {
     const redactSensitiveQueryParams = prepareSensitiveQueryParamsRedacter(
         config.nkDefaultSensitiveQueryParams?.concat(config.appSensitiveQueryParams || []),
@@ -75,11 +79,12 @@ export class NodeKit {
 
         const appInstallation = process.env.APP_INSTALLATION;
         const appEnv = process.env.APP_ENV;
-        const appDevMode = isTrueEnvValue(process.env.APP_DEV_MODE || '') || false;
 
         this.shutdownHandlers = [];
 
         const fileConfig: AppConfig = loadFileConfigs(options.configsPath, appInstallation, appEnv);
+
+        const appDevMode = resolveAppDevMode(options.config?.appDevMode, fileConfig.appDevMode);
 
         const appName =
             process.env.APP_NAME || options.config?.appName || fileConfig.appName || 'namelessApp';
