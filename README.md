@@ -4,6 +4,8 @@ NodeKit is a simple toolkit for your Node.js apps, scripts and libraries. It pro
 
 ## Install
 
+Requires Node.js 22.21.0 or newer. See the [v3 migration guide](docs/migration-v3.md) when upgrading from NodeKit 2.
+
 ```bash
 npm install --save @gravity-ui/nodekit
 ```
