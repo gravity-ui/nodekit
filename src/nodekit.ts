@@ -30,13 +30,6 @@ interface InitOptions {
     config?: AppConfig;
 }
 
-function resolveConfigSelectors(config: AppConfig = {}) {
-    return {
-        appInstallation: process.env.APP_INSTALLATION ?? config.appInstallation,
-        appEnv: process.env.APP_ENV ?? config.appEnv,
-    };
-}
-
 function resolveAppDevMode(configDevMode?: boolean, fileConfigDevMode?: boolean): boolean {
     const envDevMode = process.env.APP_DEV_MODE;
 
@@ -45,6 +38,13 @@ function resolveAppDevMode(configDevMode?: boolean, fileConfigDevMode?: boolean)
     }
 
     return configDevMode ?? fileConfigDevMode ?? false;
+}
+
+function resolveConfigSelectors(config: AppConfig = {}) {
+    return {
+        appInstallation: process.env.APP_INSTALLATION ?? config.appInstallation,
+        appEnv: process.env.APP_ENV ?? config.appEnv,
+    };
 }
 
 function prepareRedacters(config: AppConfig, appDevMode: boolean) {
