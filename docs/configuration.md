@@ -76,11 +76,21 @@ Resulting configuration is merged in the following order (each line overriding p
 - Default NodeKit config
 - File configs (if `configsPath` is passed to the constructor)
   - `configs/common.ts`
-  - `configs/<installation>/common.ts` - if `APP_INSTALLATION` is present
-  - `configs/<env>.ts` - if `APP_ENV` is present
-  - `configs/<installation>/<env>.ts` - if `APP_INSTALLATION` is present
-  - `configs/<installation>/<env>.ts` - if `APP_INSTALLATION` and `APP_ENV` are present
+  - `configs/<installation>/common.ts` - if an installation is selected
+  - `configs/<env>.ts` - if an environment is selected
+  - `configs/<installation>/<env>.ts` - if both are selected
 - Configuration object (if `config` is passed to the constructor)
+
+The environment and installation can also be selected through the constructor:
+
+```typescript
+const nodeKit = new NodeKit({
+    configsPath: path.resolve(__dirname, 'configs'),
+    config: {appEnv: 'staging', appInstallation: 'department-one'},
+});
+```
+
+`APP_ENV` and `APP_INSTALLATION` take precedence over their corresponding constructor values. An unset variable falls back to `config.appEnv` or `config.appInstallation`; an explicitly empty variable disables that selection. The resolved selectors are available as `nodekit.config.appEnv` and `nodekit.config.appInstallation` without changing `process.env`. Selectors in configuration files do not select other files or override the resolved values.
 
 ### Development mode
 

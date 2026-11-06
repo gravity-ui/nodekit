@@ -30,6 +30,13 @@ interface InitOptions {
     config?: AppConfig;
 }
 
+function resolveConfigSelectors(config: AppConfig = {}) {
+    return {
+        appInstallation: process.env.APP_INSTALLATION ?? config.appInstallation,
+        appEnv: process.env.APP_ENV ?? config.appEnv,
+    };
+}
+
 function resolveAppDevMode(configDevMode?: boolean, fileConfigDevMode?: boolean): boolean {
     const envDevMode = process.env.APP_DEV_MODE;
 
@@ -83,8 +90,7 @@ export class NodeKit {
             });
         }
 
-        const appInstallation = process.env.APP_INSTALLATION;
-        const appEnv = process.env.APP_ENV;
+        const {appInstallation, appEnv} = resolveConfigSelectors(options.config);
 
         this.shutdownHandlers = [];
 
