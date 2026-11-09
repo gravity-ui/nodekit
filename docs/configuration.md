@@ -108,9 +108,9 @@ They can be set in configuration and can be overrided with `APP_NAME` and `APP_V
 
 ## ENV variables
 
-NodeKit is bundled with [dotenv](https://www.npmjs.com/package/dotenv) and it's activated by default in constructor.
+NodeKit automatically loads `.env` from the current working directory in its constructor using Node.js's built-in [`process.loadEnvFile()`](https://nodejs.org/api/process.html#processloadenvfilepath). Existing environment variables take precedence, including variables set to an empty string. Loading happens before NodeKit resolves configuration.
 
-Dotenv automatically parses `.env` files in the directory and adds them to `process.env`. It's very useful in development since you can keep secrets and dev-related overrides in `.env` file, excluded from the repository history. Example:
+Missing or unreadable files are ignored, including custom paths. Keep secrets and development overrides in a `.env` file excluded from repository history. Example:
 
 ```typescript
 // .env
@@ -123,7 +123,7 @@ const nodeKit = new NodeKit();
 nodekit.ctx.log(process.env.API_TOKEN); // 123abc
 ```
 
-To disable dotenv, pass an option to the constructor:
+To disable automatic loading, pass an option to the constructor:
 
 ```typescript
 const nodeKit = new NodeKit({disableDotEnv: true});
@@ -136,6 +136,10 @@ const nodeKit = new NodeKit({
     envFilePath: '/custom/path/.env',
 });
 ```
+
+Relative paths resolve from the working directory; a leading `~` expands to the home directory. An empty path uses the default `.env` file.
+
+Values follow [Node.js environment-file syntax](https://nodejs.org/api/environment_variables.html#dotenv). Dotenv-specific settings and encrypted `.env.vault` files are not supported; see the [v3 migration guide](migration-v3.md).
 
 ## Accessing configuration
 
