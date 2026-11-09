@@ -4,12 +4,100 @@ on:
 
 name: Release
 
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.sha }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: gravity-ui/release-action@v1
+      - uses: actions/checkout@v4
         with:
-          github-token: ${{ secrets.GRAVITY_UI_BOT_GITHUB_TOKEN }}
-          npm-token: ${{ secrets.GRAVITY_UI_BOT_NPM_TOKEN }}
-          node-version: 22
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+      - run: npm ci
+      - run: npm test
+      - uses: google-github-actions/release-please-action@v3
+        with:
+          token: ${{ secrets.GRAVITY_UI_BOT_GITHUB_TOKEN }}
+          release-type: node
+          package-name: '@gravity-ui/nodekit'
+          bump-minor-pre-major: true
+          changelog-types: >
+            [{"type":"feat","section":"Features","hidden":false},
+            {"type":"fix","section":"Bug Fixes","hidden":false},
+            {"type":"perf","section":"Performance Improvements","hidden":false}]
+
+  publish:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          registry-url: https://registry.npmjs.org
+      - name: Check release publication
+        id: publication
+        run: |
+          node --input-type=module <<'NODE'
+          import {execFileSync} from 'node:child_process';
+          import {appendFileSync, readFileSync} from 'node:fs';
+
+          const {name, version} = JSON.parse(readFileSync('package.json', 'utf8'));
+          if (name !== '@gravity-ui/nodekit' || !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)) {
+            throw new Error('Expected a stable @gravity-ui/nodekit version');
+          }
+          const tags = execFileSync('git', ['tag', '--points-at', process.env.GITHUB_SHA], {
+            encoding: 'utf8',
+          }).trim().split('\n');
+          if (!tags.includes(`v${version}`)) {
+            console.log('This commit is not tagged for release');
+            process.exit(0);
+          }
+
+          const response = await fetch(
+            `https://registry.npmjs.org/${encodeURIComponent(name)}/${encodeURIComponent(version)}`,
+            {signal: AbortSignal.timeout(30000)},
+          );
+          if (response.status === 200) {
+            console.log(`${name}@${version} is already published`);
+          } else if (response.status === 404) {
+            const latestResponse = await fetch(
+              `https://registry.npmjs.org/${encodeURIComponent(name)}/latest`,
+              {signal: AbortSignal.timeout(30000)},
+            );
+            if (!latestResponse.ok) {
+              throw new Error(`Cannot verify npm latest: HTTP ${latestResponse.status}`);
+            }
+            const {version: latest} = await latestResponse.json();
+            if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(latest)) {
+              throw new Error(`Expected a stable npm latest version, got ${latest}`);
+            }
+            const targetParts = version.split('.').map(BigInt);
+            const latestParts = latest.split('.').map(BigInt);
+            const difference = targetParts.findIndex((part, index) => part !== latestParts[index]);
+            if (difference === -1 || targetParts[difference] < latestParts[difference]) {
+              throw new Error(`Refusing to replace npm latest ${latest} with ${version}`);
+            }
+            appendFileSync(process.env.GITHUB_OUTPUT, 'publish=true\n');
+          } else {
+            throw new Error(`Cannot verify npm version: HTTP ${response.status}`);
+          }
+          NODE
+      - run: npm ci
+        if: steps.publication.outputs.publish == 'true'
+      - name: Publish version
+        if: steps.publication.outputs.publish == 'true'
+        run: npm publish --tag latest --access public --registry https://registry.npmjs.org
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GRAVITY_UI_BOT_NPM_TOKEN }}
