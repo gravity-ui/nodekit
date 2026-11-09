@@ -61,9 +61,7 @@ interface DynamicConfigWithFile extends DynamicConfigBase {
 }
 
 export type DynamicConfigSetup =
-    | DynamicConfigWithUrl
-    | DynamicConfigWithFetch
-    | DynamicConfigWithFile;
+    DynamicConfigWithUrl | DynamicConfigWithFetch | DynamicConfigWithFile;
 
 export class DynamicConfigPoller {
     ctx: AppContext;

@@ -1,4 +1,5 @@
-import * as dotenv from 'dotenv';
+import {homedir} from 'node:os';
+import {join} from 'node:path';
 
 import {NODEKIT_BASE_CONFIG} from './lib/base-config';
 import {AppContext} from './lib/context';
@@ -30,6 +31,15 @@ interface InitOptions {
     config?: AppConfig;
 }
 
+function loadEnvironmentFile(envFilePath?: string) {
+    const path = envFilePath || undefined;
+    try {
+        process.loadEnvFile(path?.startsWith('~') ? join(homedir(), path.slice(1)) : path);
+    } catch {
+        // Environment files remain optional, including when a custom path is provided.
+    }
+}
+
 function resolveAppDevMode(configDevMode?: boolean, fileConfigDevMode?: boolean): boolean {
     const envDevMode = process.env.APP_DEV_MODE;
 
@@ -38,6 +48,13 @@ function resolveAppDevMode(configDevMode?: boolean, fileConfigDevMode?: boolean)
     }
 
     return configDevMode ?? fileConfigDevMode ?? false;
+}
+
+function resolveConfigSelectors(config: AppConfig = {}) {
+    return {
+        appInstallation: process.env.APP_INSTALLATION ?? config.appInstallation,
+        appEnv: process.env.APP_ENV ?? config.appEnv,
+    };
 }
 
 function prepareRedacters(config: AppConfig, appDevMode: boolean) {
@@ -77,14 +94,10 @@ export class NodeKit {
 
     constructor(options: InitOptions = {}) {
         if (!options.disableDotEnv) {
-            dotenv.config({
-                quiet: true,
-                ...(options.envFilePath ? {path: options.envFilePath} : {}),
-            });
+            loadEnvironmentFile(options.envFilePath);
         }
 
-        const appInstallation = process.env.APP_INSTALLATION;
-        const appEnv = process.env.APP_ENV;
+        const {appInstallation, appEnv} = resolveConfigSelectors(options.config);
 
         this.shutdownHandlers = [];
 
