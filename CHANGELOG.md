@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.22.1](https://github.com/gravity-ui/nodekit/compare/v2.22.0...v2.22.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* make release publication retryable ([#184](https://github.com/gravity-ui/nodekit/issues/184)) ([c4ce817](https://github.com/gravity-ui/nodekit/commit/c4ce8176493233f6561c502840b26e7531dcb948))
+
 ## [2.22.0](https://github.com/gravity-ui/nodekit/compare/v2.21.0...v2.22.0) (2026-11-03)
 
 
