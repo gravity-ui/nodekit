@@ -50,6 +50,13 @@ function resolveAppDevMode(configDevMode?: boolean, fileConfigDevMode?: boolean)
     return configDevMode ?? fileConfigDevMode ?? false;
 }
 
+function resolveConfigSelectors(config: AppConfig = {}) {
+    return {
+        appInstallation: process.env.APP_INSTALLATION ?? config.appInstallation,
+        appEnv: process.env.APP_ENV ?? config.appEnv,
+    };
+}
+
 function prepareRedacters(config: AppConfig, appDevMode: boolean) {
     const redactSensitiveQueryParams = prepareSensitiveQueryParamsRedacter(
         config.nkDefaultSensitiveQueryParams?.concat(config.appSensitiveQueryParams || []),
@@ -90,8 +97,7 @@ export class NodeKit {
             loadEnvironmentFile(options.envFilePath);
         }
 
-        const appInstallation = process.env.APP_INSTALLATION;
-        const appEnv = process.env.APP_ENV;
+        const {appInstallation, appEnv} = resolveConfigSelectors(options.config);
 
         this.shutdownHandlers = [];
 
