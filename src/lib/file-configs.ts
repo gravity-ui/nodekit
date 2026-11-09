@@ -11,14 +11,12 @@ function getConfigByPath(configPath: string, configName: string) {
     try {
         return interopRequire(filePath);
     } catch (error) {
-        if (
-            !(
-                error &&
-                typeof error === 'object' &&
-                'code' in error &&
-                error.code === 'MODULE_NOT_FOUND'
-            )
-        ) {
+        if (!(
+            error &&
+            typeof error === 'object' &&
+            'code' in error &&
+            error.code === 'MODULE_NOT_FOUND'
+        )) {
             throw error;
         }
     }
