@@ -1,4 +1,5 @@
-import * as dotenv from 'dotenv';
+import {homedir} from 'node:os';
+import {join} from 'node:path';
 
 import {NODEKIT_BASE_CONFIG} from './lib/base-config';
 import {AppContext} from './lib/context';
@@ -28,6 +29,15 @@ interface InitOptions {
     envFilePath?: string;
     configsPath?: string;
     config?: AppConfig;
+}
+
+function loadEnvironmentFile(envFilePath?: string) {
+    const path = envFilePath || undefined;
+    try {
+        process.loadEnvFile(path?.startsWith('~') ? join(homedir(), path.slice(1)) : path);
+    } catch {
+        // Environment files remain optional, including when a custom path is provided.
+    }
 }
 
 function resolveAppDevMode(configDevMode?: boolean, fileConfigDevMode?: boolean): boolean {
@@ -77,10 +87,7 @@ export class NodeKit {
 
     constructor(options: InitOptions = {}) {
         if (!options.disableDotEnv) {
-            dotenv.config({
-                quiet: true,
-                ...(options.envFilePath ? {path: options.envFilePath} : {}),
-            });
+            loadEnvironmentFile(options.envFilePath);
         }
 
         const appInstallation = process.env.APP_INSTALLATION;
