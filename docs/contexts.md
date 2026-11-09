@@ -49,18 +49,22 @@ You can approach usage of sub-contexts in your application with two different wa
 
 Each way have it's own upsides and downsides so choose what suits you more. But it's recommended to try to use only one of the above styles in one application so it doesn't get confusing what to pass to the functions.
 
-## Closing a context
+## Ending a context
 
-`ctx.end()` synchronously aborts `ctx.abortSignal`, closes child contexts, and ends the tracing span. Inside a synchronous abort handler, `log()`, `logWarn()`, and `logError()` still record cleanup messages without warnings about using an ended context:
+`ctx.end()` synchronously aborts `ctx.abortSignal`, ends child contexts, and ends the tracing span. Inside a synchronous abort handler, `log()`, `logWarn()`, `logError()`, `setTag()`, and `fail()` still work without warnings about using an ended context:
 
 ```typescript
-ctx.abortSignal.addEventListener('abort', () => {
-  clearInterval(pollingTimer);
-  ctx.log('Polling stopped');
-}, {once: true});
+ctx.abortSignal.addEventListener(
+  'abort',
+  () => {
+    clearInterval(pollingTimer);
+    ctx.log('Polling stopped');
+  },
+  {once: true},
+);
 ```
 
-`ctx.isEnded()` returns `true` as soon as closing starts, including inside abort handlers. Creating new child contexts is forbidden at that point. Calling `end()` again while closing does nothing; calling it after closing completes produces the existing warning.
+`ctx.isEnded()` returns `true` as soon as ending starts, including inside abort handlers. Creating new child contexts is forbidden at that point. Calling `end()` again while ending does nothing, and `fail()` only records the error; calling either after ending completes produces the existing warning.
 
 `end()` does not wait for asynchronous cleanup. Logging after an `await` in an abort handler, or after `end()` returns, still produces a warning about using an ended context.
 

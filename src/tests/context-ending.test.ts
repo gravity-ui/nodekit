@@ -5,7 +5,7 @@ import {AppContext} from '../lib/context';
 import {isTrueEnvValue} from '../lib/utils/is-true-env';
 import prepareSensitiveHeadersRedacter from '../lib/utils/redact-sensitive-headers';
 
-describe('context closing', () => {
+describe('context ending', () => {
     let exporter: tracing.InMemorySpanExporter;
     let provider: tracing.BasicTracerProvider;
     let root: AppContext;
@@ -23,7 +23,7 @@ describe('context closing', () => {
             spanProcessors: [new tracing.SimpleSpanProcessor(exporter)],
         });
         jest.spyOn(AppContext.prototype, 'tracer', 'get').mockReturnValue(
-            provider.getTracer('context-closing'),
+            provider.getTracer('context-ending'),
         );
         logger = {
             info: jest.fn(),
@@ -50,7 +50,7 @@ describe('context closing', () => {
         await provider.shutdown();
     });
 
-    test('records synchronous cleanup logs before ending the span without closed warnings', async () => {
+    test('records synchronous cleanup logs before ending the span without ended warnings', async () => {
         const ctx = root.create('operation');
         let endedDuringAbort: boolean | undefined;
         ctx.abortSignal.addEventListener('abort', () => {
@@ -58,6 +58,7 @@ describe('context closing', () => {
             ctx.log('polling stopped');
             ctx.logWarn('cleanup warning');
             ctx.logError('cleanup error');
+            ctx.setTag('cleanup', 'done');
         });
 
         ctx.end();
@@ -77,10 +78,29 @@ describe('context closing', () => {
             'cleanup error',
         ]);
         expect(spans[0].status.code).toBe(SpanStatusCode.ERROR);
+        expect(spans[0].attributes.cleanup).toBe('done');
+    });
+
+    test('records fail from a synchronous abort handler without ending twice', async () => {
+        const ctx = root.create('operation');
+        const error = new Error('cleanup failed');
+        ctx.abortSignal.addEventListener('abort', () => ctx.fail(error));
+
+        ctx.end();
+        await provider.forceFlush();
+
+        expect(logger.warn).not.toHaveBeenCalled();
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.objectContaining({err: expect.objectContaining({message: 'cleanup failed'})}),
+            '[operation] context failed',
+        );
+        const spans = exporter.getFinishedSpans();
+        expect(spans).toHaveLength(1);
+        expect(spans[0].status.code).toBe(SpanStatusCode.ERROR);
     });
 
     test('rejects new children and ends the span once when an abort listener calls end again', () => {
-        const tracer = provider.getTracer('context-closing');
+        const tracer = provider.getTracer('context-ending');
         const span = tracer.startSpan('operation');
         jest.spyOn(tracer, 'startSpan').mockReturnValueOnce(span);
         const endSpan = jest.spyOn(span, 'end');
@@ -156,8 +176,8 @@ describe('context closing', () => {
         expect(logger.warn).toHaveBeenCalledWith(`[operation] ${warning}`);
     });
 
-    test('leaves the context closed when ending its span throws', () => {
-        const tracer = provider.getTracer('context-closing');
+    test('leaves the context ended when ending its span throws', () => {
+        const tracer = provider.getTracer('context-ending');
         const span = tracer.startSpan('operation');
         jest.spyOn(tracer, 'startSpan').mockReturnValueOnce(span);
         const error = new Error('span end failed');
