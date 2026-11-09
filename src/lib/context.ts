@@ -59,6 +59,7 @@ function isContextParentParams(v: ContextParams): v is ContextParentParams {
 }
 
 type ContextCallbackFunction<T> = (ctx: AppContext) => T;
+type ContextState = 'active' | 'ending' | 'ended';
 
 export class AppContext {
     name: string;
@@ -73,7 +74,7 @@ export class AppContext {
         if (!this.abortController) {
             this.abortController = new AbortController();
 
-            if (this.ended) {
+            if (this.isEnded()) {
                 this.abortController.abort();
             }
         }
@@ -90,7 +91,7 @@ export class AppContext {
     private loggerPostfix: string;
     private loggerExtra?: Dict;
     private abortController?: AbortController;
-    private ended = false;
+    private state: ContextState = 'active';
     private parentAbortListener?: () => void;
     private nonInheritableParamNames: Set<keyof AppContextParams>;
 
@@ -188,7 +189,7 @@ export class AppContext {
     }
 
     log(message: string, extra?: Dict) {
-        if (this.isEnded()) {
+        if (this.state === 'ended') {
             this.logger.warn(this.prepareLogMessage('Context already ended'));
         }
 
@@ -199,7 +200,7 @@ export class AppContext {
     }
 
     logError(message: string, error?: AppError | Error | unknown, extra?: Dict) {
-        if (this.isEnded()) {
+        if (this.state === 'ended') {
             this.logger.warn(this.prepareLogMessage('Trying to call logError in ended context'));
         }
 
@@ -223,7 +224,7 @@ export class AppContext {
     }
 
     logWarn(message: string, error?: AppError | Error | unknown, extra?: Dict) {
-        if (this.isEnded()) {
+        if (this.state === 'ended') {
             this.logger.warn(this.prepareLogMessage('Trying to call logWarn in ended context'));
         }
 
@@ -307,32 +308,37 @@ export class AppContext {
     }
 
     setTag(key: string, value: AttributeValue) {
-        if (this.isEnded()) {
+        if (this.state === 'ended') {
             this.logger.warn(this.prepareLogMessage('Trying to call setTag in ended context'));
         }
         this.span?.setAttribute(key, value);
     }
 
     isEnded() {
-        return this.ended;
+        return this.state !== 'active';
     }
 
     end() {
-        if (this.isEnded()) {
+        if (this.state === 'ending') {
+            return;
+        }
+        if (this.state === 'ended') {
             this.logger.warn(this.prepareLogMessage('Trying to call end in ended context'));
             return;
         }
-        this.ended = true;
-        this.removeParentAbortListener();
-        this.abortController?.abort();
-        this.endTime = Date.now();
-        if (this.span) {
-            this.span.end();
+        this.state = 'ending';
+        try {
+            this.removeParentAbortListener();
+            this.abortController?.abort();
+            this.endTime = Date.now();
+            this.span?.end();
+        } finally {
+            this.state = 'ended';
         }
     }
 
     fail(error?: AppError | Error | unknown) {
-        if (this.isEnded()) {
+        if (this.state === 'ended') {
             this.logger.warn(this.prepareLogMessage('Trying to call fail in ended context'));
             return;
         }
